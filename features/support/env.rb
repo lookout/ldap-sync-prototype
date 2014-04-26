@@ -1,5 +1,10 @@
+require 'dotenv'
+Dotenv.load
+
 require 'aruba/cucumber'
 require 'methadone/cucumber'
+require 'active_support/dependencies/autoload'
+require 'conjur/api'
 
 ENV['PATH'] = "#{File.expand_path(File.dirname(__FILE__) + '/../../bin')}#{File::PATH_SEPARATOR}#{ENV['PATH']}"
 LIB_DIR = File.join(File.expand_path(File.dirname(__FILE__)),'..','..','lib')
@@ -13,4 +18,8 @@ end
 
 After do
   ENV['RUBYLIB'] = @original_rubylib
+end
+
+Before do
+  @conjur = Conjur::API.new_from_key ENV['CONJUR_USERNAME'], ENV['CONJUR_API_KEY']
 end

@@ -4,3 +4,5 @@ pkg
 html
 .bundle
 Gemfile.lock
+.conjurrc
+conjur-devldap.pem
