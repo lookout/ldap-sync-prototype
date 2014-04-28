@@ -6,27 +6,31 @@ Feature: Entity import
   Scenario: RFC 2307 schema
     Given LDAP database with:
       """
-      dn: uid=alice,ou=People,dc=conjur,dc=net
+      dn: uid=alice,dc=conjur,dc=net
       cn: Alice
       uid: alice
       uidNumber: 36
       gidNumber: 1019
       homeDirectory: /home/alice
+      objectClass: posixAccount
+      objectClass: top
 
-      dn: uid=bob,ou=People,dc=conjur,dc=net
+      dn: uid=bob,dc=conjur,dc=net
       cn: Bob
       uid: bob
       uidNumber: 37
       gidNumber: 1019
       homeDirectory: /home/bob
+      objectClass: posixAccount
+      objectClass: top
 
-      dn: cn=users,ou=Group,dc=conjur,dc=net
+      dn: cn=users,dc=conjur,dc=net
       cn: users
       gidNumber: 1019
       objectClass: posixGroup
       objectClass: top
 
-      dn: cn=admins,ou=Group,dc=conjur,dc=net
+      dn: cn=admins,dc=conjur,dc=net
       cn: admins
       gidNumber: 985
       objectClass: posixGroup
