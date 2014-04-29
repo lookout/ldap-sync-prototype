@@ -37,7 +37,7 @@ Feature: Entity import
       objectClass: top
       memberUid: bob
       """
-    When I run "conjur-ldap-sync"
+    When I successfully run `conjur-ldap-sync`
     Then role "ldap-user:<prefix>/alice" should exist
     And it should be a member of "ldap-group:<prefix>/users"
     But not "ldap-group:<prefix>/admins"
