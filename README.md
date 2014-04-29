@@ -9,9 +9,35 @@ Synchronizes users and groups from an LDAP server to a hierarchy of roles in Con
 ## Usage
 
 - Create a role for the service.
-- Create conjurrc config file for the role.
 - Create ldaprc with LDAP connection settings.
 - Run (possibly from a crontab).
+
+## Configuration
+
+conjur-ldap-sync currently can only be configured via environment variables.
+
+### LDAP
+
+The easiest way to configure the LDAP side is to create a configuration file such as:
+```
+SSL off # NOTE: due to a quirk this should come first
+URI ldap://localhost:3897
+BASE dc=conjur,dc=net
+```
+and point `LDAPCONF` to its path.
+
+For other options (such as using environment variables directly), please consult
+[Treequel documentation](http://rubydoc.info/gems/treequel/Treequel#directory_from_config-class_method).
+
+### Conjur
+
+To allow conjur-ldap-sync to connect to Conjur, make sure `CONJUR_USERNAME`
+and `CONJUR_API_KEY` environment variables correspond to a pre-created role
+dedicated for this purpose.
+
+The role name will be used as a prefix for created roles; eg. conjur-ldap-sync with
+`CONJUR_USERNAME=service/my-directory` will create roles such as
+`ldap-user:my-directory/alice` and `ldap-group:my-directory/legion`.
 
 ## Operation
 
@@ -31,6 +57,7 @@ the ldap hierarchy to existing Conjur entities. Note it's possible to create som
 facilitate this process according to business needs; some of the common use cases may
 be automated in the future.
 
+(Not implemented:)
 Running conjur-ldap-sync again will change the Conjur representation of the LDAP entries
 to reflect any changes made since the last run. Because it's not possible to remove entities in Conjur,
 deletion will cause any and all role grants on the corresponding entity to be revoked.

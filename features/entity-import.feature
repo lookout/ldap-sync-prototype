@@ -1,7 +1,9 @@
 Feature: Entity import
-  In order to integrate with some existing systems
-  I want to have the relevant entities from that directory mirrored in Conjur
-  So I can administer some Conjur users in an external directory
+  As an administrator in a company
+  In order to lower the operating cost
+  I want to be able to import user hierarchy from an existing LDAP directory
+  So I can migrate to a cloud solution with Conjur
+  Without having to recreate all the data from scratch
 
   Scenario: RFC 2307 schema
     Given LDAP database with:
