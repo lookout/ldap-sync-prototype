@@ -13,11 +13,27 @@ module Conjur
         directory = Treequel.directory_from_config
 
         directory.extend Directory
+
         target = directory.posix_groups
 
         target.values.flatten.uniq.each do |username|
-          conjur.create_role "ldap-user:#{@prefix}/#{username}"
+          conjur.create_role user_role(username)
         end
+
+        target.keys.each do |groupname|
+          group = conjur.create_role group_role(groupname)
+          target[groupname].each do |username|
+            group.grant_to user_role(username)
+          end
+        end
+      end
+
+      def user_role username
+        "ldap-user:#{@prefix}/#{username}"
+      end
+
+      def group_role groupname
+        "ldap-group:#{@prefix}/#{groupname}"
       end
 
       def conjur

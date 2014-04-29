@@ -29,5 +29,5 @@ World ConjurHelpers
 Before do
   @conjur = conjur
   @conjur_prefix = conjur_prefix
-  @aruba_timeout_seconds = 5
+  @aruba_timeout_seconds = 13
 end
