@@ -40,7 +40,7 @@ Feature: Entity import
     When I successfully run `conjur-ldap-sync`
     Then role "ldap-user:<prefix>/alice" should exist
     And it should be a member of "ldap-group:<prefix>/users"
-    But not "ldap-group:<prefix>/admins"
+    But it should not be a member of "ldap-group:<prefix>/admins"
     And role "ldap-user:<prefix>/bob" should exist
     And it should be a member of "ldap-group:<prefix>/users"
-    And also to "ldap-group:<prefix>/admins"
+    And it should be a member of "ldap-group:<prefix>/admins"
