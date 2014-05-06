@@ -6,3 +6,4 @@ html
 Gemfile.lock
 .conjurrc
 conjur-devldap.pem
+.yardoc
