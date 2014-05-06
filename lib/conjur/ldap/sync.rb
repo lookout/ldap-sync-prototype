@@ -1,6 +1,7 @@
 require 'conjur/api'
 require 'conjur/ldap/sync/version'
 require 'conjur/ldap/directory'
+require 'conjur/ldap/roles'
 require 'treequel'
 require 'pp'
 
@@ -10,37 +11,21 @@ module Conjur
       module_function
 
       def run_sync
-        directory = Treequel.directory_from_config
-
-        directory.extend Directory
-
-        target = directory.posix_groups
-
-        target.values.flatten.uniq.each do |username|
-          conjur.create_role user_role(username)
-        end
-
-        target.keys.each do |groupname|
-          group = conjur.create_role group_role(groupname)
-          target[groupname].each do |username|
-            group.grant_to user_role(username)
-          end
-        end
+        conjur.sync_to directory.posix_groups
       end
 
-      def user_role username
-        "ldap-user:#{@prefix}/#{username}"
-      end
-
-      def group_role groupname
-        "ldap-group:#{@prefix}/#{groupname}"
+      def directory
+        unless @directory
+          @directory = Treequel.directory_from_config
+          @directory.extend Directory
+        end
+        @directory
       end
 
       def conjur
         unless @conjur
-          username = ENV['CONJUR_USERNAME']
-          @conjur = Conjur::API.new_from_key username, ENV['CONJUR_API_KEY']
-          @prefix = username.remove /.*\//
+          @conjur = Conjur::API.new_from_key ENV['CONJUR_USERNAME'], ENV['CONJUR_API_KEY']
+          @conjur.extend Roles
         end
         @conjur
       end
