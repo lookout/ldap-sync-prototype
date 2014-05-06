@@ -6,28 +6,29 @@ require 'conjur/api'
 require 'securerandom'
 
 module ConjurHelpers
+  BASE_CONJUR = Conjur::API.new_from_key ENV['CONJUR_USERNAME'], ENV['CONJUR_API_KEY']
+
   def mangle_name name
     name.sub '<prefix>', @conjur_prefix
   end
+
+  def init_testrole
+    @conjur_prefix = "ldap-sync-" + SecureRandom.urlsafe_base64(8)
+    username = mangle_name('service/<prefix>')
+
+    BASE_CONJUR.create_role mangle_name('service:<prefix>')
+    key = BASE_CONJUR.create_authn_user(username)['api_key']
+
+    @conjur = Conjur::API.new_from_key username, key
+
+    ENV['CONJUR_USERNAME'] = username
+    ENV['CONJUR_API_KEY'] = key
+  end
 end
-
-conjur = Conjur::API.new_from_key ENV['CONJUR_USERNAME'], ENV['CONJUR_API_KEY']
-conjur_prefix = "ldap-sync-" + SecureRandom.urlsafe_base64(8)
-
-include ConjurHelpers
-@conjur_prefix = conjur_prefix
-
-conjur.create_role mangle_name('service:<prefix>')
-username = mangle_name('service/<prefix>')
-key = conjur.create_authn_user(username)['api_key']
-
-ENV['CONJUR_USERNAME'] = username
-ENV['CONJUR_API_KEY'] = key
 
 World ConjurHelpers
 
 Before do
-  @conjur = conjur
-  @conjur_prefix = conjur_prefix
+  init_testrole
   @aruba_timeout_seconds = 13
 end
