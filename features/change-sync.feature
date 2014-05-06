@@ -1,4 +1,4 @@
-Feature: Entity import
+Feature: Synchronizing changes
   As an administrator in a company
   In order to lower the operating cost
   I want to be able to sync a user hierarchy from an existing LDAP directory

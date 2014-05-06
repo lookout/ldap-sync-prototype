@@ -1,4 +1,4 @@
-Then(/^(?:the )role "(.*?)" should exist$/) do |role|
+Then(/^(?:the )?role "(.*?)" should exist$/) do |role|
   @last_role = @conjur.role(mangle_name role)
   @last_role.should exist
 end
