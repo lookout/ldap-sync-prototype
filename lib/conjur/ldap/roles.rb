@@ -17,17 +17,26 @@ module Conjur::Ldap::Roles
   # @param [Hash] target role hierarchy.
   def sync_to target
     target.values.flatten.uniq.each do |username|
-      create_role user_role(username)
+      ensure_role user_role(username)
     end
 
     target.keys.each do |groupname|
-      group = create_role group_role(groupname)
+      group = ensure_role group_role(groupname)
       target[groupname].each do |username|
         group.grant_to user_role(username)
       end
     end
   end
-
+  
+  # Find or create a role.
+  # @param [String] id the role id
+  # @return [Conjur::Role] the role
+  #
+  def ensure_role id
+    role = self.role id
+    role.exists? ? role : create_role(id)
+  end
+  
   # @return [String] a role id corresponding to LDAP +username+.
   def user_role username
     "ldap-user:#{prefix}/#{username}"
