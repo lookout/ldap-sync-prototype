@@ -59,4 +59,4 @@ Feature: Synchronizing changes
     objectClass: top
     """
     When I successfully run `conjur-ldap-sync`
-    Then it should no longer be its member
+    Then it should not be a member of "ldap-group:<prefix>/admins"
