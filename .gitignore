@@ -7,3 +7,4 @@ Gemfile.lock
 .conjurrc
 conjur-devldap.pem
 .yardoc
+.idea
