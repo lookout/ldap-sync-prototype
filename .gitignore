@@ -8,3 +8,5 @@ Gemfile.lock
 conjur-devldap.pem
 .yardoc
 .idea
+.env
+.rvmrc
