@@ -10,8 +10,16 @@ module Conjur
     module Sync
       module_function
 
-      def run_sync
-        conjur.sync_to directory.posix_groups
+      # Entry point for sync operation
+      #
+      # @param opts [Hash] options for sync behavior
+      # @option opts [String] :owner (logged in conjur user) the role that will own
+      #   all created assets.
+      # @option opts [String] :prefix (created from owner) prefix to namespace created assets
+      # @option opts [Boolean] :save_passwords (false) whether to save credentials for users created
+      #   in variables.
+      def run_sync opts
+        conjur.sync_to directory.posix_groups, opts
       end
 
       def directory
