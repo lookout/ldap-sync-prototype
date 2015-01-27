@@ -11,12 +11,20 @@ class App
   include Methadone::CLILogging
 
   main do
-    Conjur::Ldap::Sync.run_sync
+    Conjur::Ldap::Sync.run_sync options
   end
 
   version Conjur::Ldap::Sync::VERSION
 
   use_log_level_option
+
+  on '--owner OWNER', 'Role that will own all groups, users, and variables created'
+
+  on '--prefix PREFIX', 'Prefix to use for all created assets'
+
+  on '--save-passwords', 'When present, passwords will be saved to variables' do
+    options[:save_passwords] = true
+  end
 
   go!
 end
