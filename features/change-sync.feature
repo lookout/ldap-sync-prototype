@@ -31,9 +31,9 @@ Feature: Synchronizing changes
     objectClass: top
     memberUid: alice
     """
-    And I successfully run `conjur-ldap-sync`
-    Then the role "ldap-user:<prefix>/alice" should exist
-    And it should be a member of "ldap-group:<prefix>/admins"
+    And I successfully sync
+    Then the role "user:<prefix>/alice" should exist
+    And it should be a member of "group:<prefix>/admins"
 
     Then the LDAP database changes to
     """
@@ -58,5 +58,5 @@ Feature: Synchronizing changes
     objectClass: posixGroup
     objectClass: top
     """
-    When I successfully run `conjur-ldap-sync`
-    Then it should not be a member of "ldap-group:<prefix>/admins"
+    When I successfully sync
+    Then it should not be a member of "group:<prefix>/admins"
