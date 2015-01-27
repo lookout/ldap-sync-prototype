@@ -73,7 +73,7 @@ module Conjur::Ldap::Roles
   # @return [Conjur::User] the user
   def find_or_create_user username
     username = ldap_user username
-    $stderr.puts "FIND_OR_CREATE_USER: #{username}"
+    
     user = self.user(username)
     user = create_user(username, owner: owner.roleid, password: false) unless user.exists?
     save_user_password user if save_passwords?
@@ -100,8 +100,6 @@ module Conjur::Ldap::Roles
   # @param [Array<String>] usernames
   def update_group_memberships group, usernames
     members = group.role.members.reject{|grant| grant.member.kind != 'user'}.map{|grant| grant.member.identifier}
-
-    $stderr.puts "MEMBERS OF #{group.role.identifier}: #{members}"
 
     usernames.map{|u| ldap_user(u)}.each do |username|
       if members.member?(username)
