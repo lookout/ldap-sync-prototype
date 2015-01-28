@@ -5,7 +5,6 @@ Feature: Synchronizing changes
   So I can migrate to a cloud solution with Conjur
   While still using existing tools to administer some of it
 
-  @wip
   Scenario: Removing a user from a group
     Given I initially have an LDAP database with:
     """
@@ -32,8 +31,8 @@ Feature: Synchronizing changes
     memberUid: alice
     """
     And I successfully sync
-    Then the role "user:<prefix>/alice" should exist
-    And it should be a member of "group:<prefix>/admins"
+    Then the role "user:<prefix>-alice" should exist
+    And it should be a member of "group:<prefix>-admins"
 
     Then the LDAP database changes to
     """
@@ -59,4 +58,4 @@ Feature: Synchronizing changes
     objectClass: top
     """
     When I successfully sync
-    Then it should not be a member of "group:<prefix>/admins"
+    Then it should not be a member of "group:<prefix>-admins"

@@ -8,8 +8,14 @@ require 'securerandom'
 module ConjurHelpers
   BASE_CONJUR = Conjur::API.new_from_key ENV['CONJUR_USERNAME'], ENV['CONJUR_API_KEY']
 
+  attr_reader :conjur
+
   def mangle_name name
-    name.sub '<prefix>', @conjur_prefix
+    name.gsub /<prefix>/, @conjur_prefix
+  end
+
+  def roles_by_name
+    @roles_by_name ||= {}
   end
 
   def init_testrole
@@ -23,6 +29,14 @@ module ConjurHelpers
 
     ENV['CONJUR_USERNAME'] = username
     ENV['CONJUR_API_KEY'] = key
+  end
+
+  def find_or_create_role rolename
+    mangled = mangle_name(rolename)
+    unless (role = conjur.role(mangled)).exists?
+      role = conjur.create_role(mangled)
+    end
+    role
   end
 
   attr_writer :run_sync_opts

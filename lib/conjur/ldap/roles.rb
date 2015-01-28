@@ -35,13 +35,6 @@ module Conjur::Ldap::Roles
     target.each do |groupname, usernames|
       update_group_memberships find_or_create_group(groupname), usernames
     end
-
-    # Finally, add the roles to the ldap-agent role if given
-    if ldap_agent_role
-      new_roles.each do |role|
-        role.grant_to ldap_agent_role
-      end
-    end
   end
 
   # @!attribute r frozen hash containing our options.
@@ -50,7 +43,6 @@ module Conjur::Ldap::Roles
   def prefix; options[:prefix] end
   def owner; options[:owner] end
   def save_passwords?; options[:save_passwords] end
-  def ldap_agent_role; options[:ldap_agent_role] end
 
   def new_roles
     @new_roles ||= []
@@ -65,8 +57,8 @@ module Conjur::Ldap::Roles
          .reverse_merge(save_passwords: false,
                         prefix: default_prefix)
     opts[:owner] = find_role(opts[:owner] || current_role)
-    opts[:ldap_agent_role] = find_role(opts[:owner]) if opts[:ldap_agent_role]
     opts.freeze
+    opts
   end
 
   # Default value for our asset prefix, generated from the conjur username
@@ -89,19 +81,19 @@ module Conjur::Ldap::Roles
   # @param [String] username the LDAP username
   # @return [Conjur::User] the user
   def find_or_create_user username
-    find_or_create :user, username, owner: owner.roleid, password: false do |user|
+    find_or_create :user, username, password: false, ownerid: owner.roleid do |user|
       save_user_password(user) if save_passwords?
     end
   end
 
   def find_or_create_group groupname
-    find_or_create :group, groupname, owner: owner.roleid
+    find_or_create :group, groupname, ownerid: owner.roleid
   end
 
 
-  def find_or_create kind, id,opts = {}
+  def find_or_create kind, id, opts = {}
     role_name = send(:"ldap_#{kind}", id)
-    role = send(kind.to_sym)
+    role = send(kind.to_sym, role_name)
     unless role.exists?
       role = send(:"create_#{kind}", role_name, opts)
       new_roles << role.role
@@ -125,7 +117,7 @@ module Conjur::Ldap::Roles
       if members.member?(username)
         members.delete(username)
       else
-        group.add_member full_user_id(username)
+        group.add_member full_user_id(username), acting_as: owner.roleid
       end
     end
 
@@ -149,11 +141,11 @@ module Conjur::Ldap::Roles
   end
 
   def prefixed name
-    "#{(prefix.nil? || prefix.empty?) ? 'ldap' : prefix}/#{name}"
+    "#{(prefix.nil? || prefix.empty?) ? 'ldap' : prefix}-#{name}"
   end
 
   def user_password_variable user
-    create_variable 'text/plain', 'conjur-api-key', "#{prefix}/#{user.login}/password"
+    create_variable 'text/plain', 'conjur-api-key', prefixed("#{user.login}/password")
   end
 
 end

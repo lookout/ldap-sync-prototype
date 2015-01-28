@@ -26,5 +26,6 @@ class App
     options[:save_passwords] = true
   end
 
+
   go!
 end
