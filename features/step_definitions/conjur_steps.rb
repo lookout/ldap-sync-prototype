@@ -3,15 +3,9 @@ Then(/^(?:the )?role "(.*?)" should exist$/) do |role|
   @last_role.should exist
 end
 
-Then(/^it should (not )?be a member of "(.*?)"( with admin option)?$/) do |neg, role, admin_option|
+Then(/^it should (not )?be a member of "(.*?)"$/) do |neg, role|
   role = @conjur.role(mangle_name role)
   @last_role.member_of?(role).should == neg.nil?
-  if admin_option
-    is_admin = role.members.any? do |grant|
-      grant.member.roleid == @last_role.roleid and grant.admin_option
-    end
-    expect(is_admin).to be_truthy
-  end
 end
 
 
