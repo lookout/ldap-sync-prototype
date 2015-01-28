@@ -22,18 +22,25 @@ module Conjur::Ldap::Roles
   # @option opts [String] :prefix (created from owner) prefix to namespace created assets
   # @option opts [Boolean] :save_passwords (false) whether to save credentials for users created
   #   in variables.
+  # @option opts [String] :ldap_agent_role when given, all created roles will be granted to this role.
   def sync_to target, opts
     @options = normalize_options opts
 
     # First make sure that all of the user roles exist.
     target.values.flatten.uniq.each do |username|
-      puts "find_or_create_user(#{username})``"
       find_or_create_user username
     end
 
     # Now create the groups
     target.each do |groupname, usernames|
       update_group_memberships find_or_create_group(groupname), usernames
+    end
+
+    # Finally, add the roles to the ldap-agent role if given
+    if ldap_agent_role
+      new_roles.each do |role|
+        role.grant_to ldap_agent_role
+      end
     end
   end
 
@@ -43,6 +50,12 @@ module Conjur::Ldap::Roles
   def prefix; options[:prefix] end
   def owner; options[:owner] end
   def save_passwords?; options[:save_passwords] end
+  def ldap_agent_role; options[:ldap_agent_role] end
+
+  def new_roles
+    @new_roles ||= []
+  end
+
 
   private
 
@@ -51,7 +64,8 @@ module Conjur::Ldap::Roles
      opts.slice(:owner,:prefix, :save_passwords)
          .reverse_merge(save_passwords: false,
                         prefix: default_prefix)
-    opts[:owner] = find_owner(opts[:owner] || current_role)
+    opts[:owner] = find_role(opts[:owner] || current_role)
+    opts[:ldap_agent_role] = find_role(opts[:owner]) if opts[:ldap_agent_role]
     opts.freeze
   end
 
@@ -64,7 +78,7 @@ module Conjur::Ldap::Roles
 
   # Finds the owner role
   # @return Conjur::Role
-  def find_owner id_or_role
+  def find_role id_or_role
     id_or_role.kind_of?(Conjur::Role) ? id_or_role : self.role(id_or_role)
   end
 
@@ -73,27 +87,30 @@ module Conjur::Ldap::Roles
   # @param [String] username the LDAP username
   # @return [Conjur::User] the user
   def find_or_create_user username
-    username = ldap_user username
-
-    user = self.user(username)
-    user = create_user(username, owner: owner.roleid, password: false) unless user.exists?
-    save_user_password user if save_passwords?
-    user
+    find_or_create :user, username, owner: owner.roleid, password: false do |user|
+      save_user_password(user) if save_passwords?
+    end
   end
 
-  # Find or create a group corresponding to the LDAP group name
-  # @param [String] groupname
-  # @return [Conjur::Group]
   def find_or_create_group groupname
-    groupname = ldap_group groupname
-    group = self.group(groupname)
-    group.exists? ? group : create_group(groupname, owner: owner.roleid)
+    find_or_create :group, groupname, owner: owner.roleid
+  end
+
+
+  def find_or_create kind, id,opts = {}
+    role_name = send(:"ldap_#{kind}", id)
+    role = send(kind.to_sym)
+    unless role.exists?
+      role = send(:"create_#{kind}", role_name, opts)
+      new_roles << role.role
+      yield role if block_given?
+    end
+    role
   end
 
   def save_user_password user
     password = user.password || user.api_key
-    variable = user_password_variable user
-    variable.add_value password
+    user_password_variable(user).add_value(user.api_key)
   end
 
   # Update conjur group members to match the current LDAP groups
