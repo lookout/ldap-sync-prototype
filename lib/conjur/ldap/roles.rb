@@ -27,6 +27,7 @@ module Conjur::Ldap::Roles
 
     # First make sure that all of the user roles exist.
     target.values.flatten.uniq.each do |username|
+      puts "find_or_create_user(#{username})``"
       find_or_create_user username
     end
 
@@ -73,7 +74,7 @@ module Conjur::Ldap::Roles
   # @return [Conjur::User] the user
   def find_or_create_user username
     username = ldap_user username
-    
+
     user = self.user(username)
     user = create_user(username, owner: owner.roleid, password: false) unless user.exists?
     save_user_password user if save_passwords?

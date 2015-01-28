@@ -24,6 +24,12 @@ module ConjurHelpers
     ENV['CONJUR_USERNAME'] = username
     ENV['CONJUR_API_KEY'] = key
   end
+
+  attr_writer :run_sync_opts
+  def run_sync_opts; @run_sync_opts ||= {} end
+  attr_accessor :run_sync_called
+  alias run_sync_called? run_sync_called
+
 end
 
 World ConjurHelpers
