@@ -79,7 +79,9 @@ module Conjur::Ldap::Roles
   # Finds the owner role
   # @return Conjur::Role
   def find_role id_or_role
-    id_or_role.kind_of?(Conjur::Role) ? id_or_role : self.role(id_or_role)
+    self.role(id_or_role).tap do |role|
+      raise "Role #{id_or_role} does not exist!" unless role.exists?
+    end
   end
 
   # Find or create a Conjur user corresponding to the LDAP user
