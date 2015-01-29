@@ -145,7 +145,7 @@ module Conjur::Ldap::Roles
   end
 
   def user_password_variable user
-    create_variable 'text/plain', 'conjur-api-key', prefixed("#{user.login}/password")
+    create_variable 'text/plain', 'conjur-api-key', id: "#{user.login}/password",ownerid: owner.roleid
   end
 
 end
