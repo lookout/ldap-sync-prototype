@@ -18,14 +18,19 @@ class App
 
   use_log_level_option
 
+  options[:save_passwords] = false
+  options[:ldap_ids] = true
+  options[:allow_id_conflicts] = false
+  
   on '--owner OWNER', 'Role that will own all groups, users, and variables created'
 
   on '--prefix PREFIX', 'Prefix to use for all created assets'
 
-  on '--save-passwords', 'When present, passwords will be saved to variables' do
-    options[:save_passwords] = true
-  end
-
+  on('--save-passwords', 'When present, passwords will be saved to variables'){ options[:save_passwords]}
+  
+  on('--no-ldap-ids', "Don't import LDAP ids to Conjur assets"){ options[:ldap_ids] = false }
+  
+  on('--allow-id-conflicts', "Don't bail when an LDAP id is already in use by conjur"){ options[:allow_id_conflicts] = true }
 
   go!
 end
