@@ -48,3 +48,10 @@ end
 Given %r{^a role named "(.*?)"$} do |rolename|
   roles_by_name[rolename] = find_or_create_role(rolename)
 end
+
+Then %r{^a user named "(.*?)" exists and has the uid for "(.*?)"} do |username, uidfor|
+  uid = uids[uidfor]
+  user = conjur.user(mangle_name username)
+  expect(user).to exist
+  expect(user.attributes['uidnumber'].to_s).to eq(uid.to_s)
+end

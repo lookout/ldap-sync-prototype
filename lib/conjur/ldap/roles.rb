@@ -15,7 +15,7 @@ module Conjur::Ldap::Roles
   # deleted in upstream are simply removed from all membership relations
   # (except the admin one).
   #
-  # @param [Hash] target role hierarchy.
+  # @param [Array<Conjur::Ldap::Directory::Group] groups top level groups
   # @param [Hash] opts
   # @option opts [String] :owner (logged in conjur user) the role that will own
   #   all created assets.
@@ -25,21 +25,22 @@ module Conjur::Ldap::Roles
   # @option opts [String] :ldap_agent_role when given, all created roles will be granted to this role.
   def sync_to target, opts
     @options = normalize_options opts
-
+    
+    users = target.users
+    groups = target.groups
+    
     # First make sure that all of the user roles exist.
-    target.values.flatten.uniq.each do |username|
-      find_or_create_user username
-    end
-
-    # Now create the groups
-    target.each do |groupname, usernames|
-      update_group_memberships find_or_create_group(groupname), usernames
+    users.each{|u| find_or_create_user(u.name, u.uid)}
+    
+    groups.each do |g|
+      group = find_or_create_group g.name, g.gid
+      update_group_memberships group, g.members.map{ |m| m.name rescue m } # WTF
     end
   end
 
   # @!attribute r frozen hash containing our options.
   attr_reader :options
-
+  
   def prefix; options[:prefix] end
   def owner; options[:owner] end
   def save_passwords?; options[:save_passwords] end
@@ -80,13 +81,14 @@ module Conjur::Ldap::Roles
   #
   # @param [String] username the LDAP username
   # @return [Conjur::User] the user
-  def find_or_create_user username
-    find_or_create :user, username, password: false, ownerid: owner.roleid do |user|
+  def find_or_create_user username, uid
+    find_or_create :user, username, password: false, ownerid: owner.roleid, uidnumber: uid do |user|
       save_user_password(user) if save_passwords?
     end
   end
 
-  def find_or_create_group groupname
+  def find_or_create_group groupname, gid
+    # TODO use gid, but HOW?
     find_or_create :group, groupname, ownerid: owner.roleid
   end
 
@@ -104,9 +106,10 @@ module Conjur::Ldap::Roles
 
   def save_user_password user
     password = user.password || user.api_key
-    user_password_variable(user).add_value(user.api_key)
+    user_password_variable(user).add_value(password)
   end
 
+  
   # Update conjur group members to match the current LDAP groups
   # @param [Conjur::Group] group
   # @param [Array<String>] usernames

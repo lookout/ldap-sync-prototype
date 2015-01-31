@@ -2,6 +2,26 @@ require 'tempfile'
 require 'ladle'
 
 module LdapHelpers
+  def uids
+    @uids ||= random_id_hash
+  end
+  
+  def gids
+    @gids ||= random_id_hash
+  end
+  
+  def random_id_hash
+    Hash.new do |h,k|
+      h[k] = rand(5_000_000)
+    end
+  end
+  
+  def insert_uids string
+    string.gsub /<(uids|gids)\[(.*?)\]>/ do
+      send($1.to_sym)[$2]
+    end
+  end
+  
   def serve_ldap ldif
     stop_ldap_server
     @ldifile = Tempfile.new ['ldif', '.ldif']

@@ -1,11 +1,10 @@
-Feature: Entity import
-  As an administrator in a company
-  In order to lower the operating cost
-  I want to be able to import user hierarchy from an existing LDAP directory
-  So I can migrate to a cloud solution with Conjur
-  Without having to recreate all the data from scratch
-
-  Scenario: RFC 2307 schema
+Feature: LDAP UIDs are imported along with users
+  As a Conjur user
+  In order to keep track of which LDAP accounts correspond to Conjur users
+  I want the imported Conjur users to have their uidnumber set to the LDAP account's uidNumber
+  
+    
+  Scenario: Users are imported with correct uidnumbers
     Given LDAP database with:
       """
       dn: uid=alice,dc=conjur,dc=net
@@ -39,10 +38,6 @@ Feature: Entity import
       objectClass: top
       memberUid: bob
       """
-    When I successfully sync
-    Then role "user:<prefix>-alice" should exist
-    And it should be a member of "group:<prefix>-users"
-    But it should not be a member of "group:<prefix>-admins"
-    And role "user:<prefix>-bob" should exist
-    And it should be a member of "group:<prefix>-users"
-    And it should be a member of "group:<prefix>-admins"
+    And I successfully sync
+    Then a user named "<prefix>-alice" exists and has the uid for "alice"
+    And a user named "<prefix>-bob" exists and has the uid for "bob"
