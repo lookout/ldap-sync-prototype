@@ -26,7 +26,7 @@ class App
 
   on '--prefix PREFIX', 'Prefix to use for all created assets'
 
-  on('--save-passwords', 'When present, passwords will be saved to variables'){ options[:save_passwords]}
+  on('--save-passwords', 'When present, passwords will be saved to variables'){ options[:save_passwords] = true}
   
   on('--no-ldap-ids', "Don't import LDAP ids to Conjur assets"){ options[:ldap_ids] = false }
   

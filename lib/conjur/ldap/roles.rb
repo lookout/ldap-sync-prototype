@@ -82,7 +82,7 @@ module Conjur::Ldap::Roles
   # @param [String] username the LDAP username
   # @return [Conjur::User] the user
   def find_or_create_user username, uid
-    find_or_create :user, username, password: false, ownerid: owner.roleid, uidnumber: uid do |user|
+    find_or_create :user, username, ownerid: owner.roleid, uidnumber: uid do |user|
       save_user_password(user) if save_passwords?
     end
   end
