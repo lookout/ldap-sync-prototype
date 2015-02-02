@@ -2,27 +2,23 @@
 # for role manipulation used in ldap-sync.
 
 module Conjur::Ldap::Roles
-  # Modifies LDAP roles in Conjur to reflect given target hash.
-  #
-  # Keys in the given hash are understood to represent user group (names);
-  # the corresponding values should be string arrays of user names.
-  #
-  # Groups are created as +ldap-group+ roles and users as +ldap-group+.
-  # If a hierarchy already exists, it is adjusted to the target by changing
-  # corresponding role memberships.
-  #
+  # Modifies LDAP roles in Conjur to reflect give  LDAP structure
+  # 
+  # LDAP groups are mapped to Conjur groups, and LDAP users to Conjur 
+  # users.  Their names are preserved as-is, and their uidnumber and gidnumber
+  # are set from the LDAP gidNumber and uidNumber fields in LDAP.
+  # 
   # Because it's not allowed to delete roles in Conjur, any roles that are
   # deleted in upstream are simply removed from all membership relations
   # (except the admin one).
   #
-  # @param [Array<Conjur::Ldap::Directory::Group] groups top level groups
+  # @param [Conjur::Ldap::Directory::Structure] target structure of the LDAP directory
   # @param [Hash] opts
   # @option opts [String] :owner (logged in conjur user) the role that will own
   #   all created assets.
   # @option opts [String] :prefix (created from owner) prefix to namespace created assets
   # @option opts [Boolean] :save_passwords (false) whether to save credentials for users created
   #   in variables.
-  # @option opts [String] :ldap_agent_role when given, all created roles will be granted to this role.
   def sync_to target, opts
     @options = normalize_options opts
     
@@ -30,11 +26,11 @@ module Conjur::Ldap::Roles
     groups = target.groups
     
     # First make sure that all of the user roles exist.
-    users.each{|u| find_or_create_user(u.name, u.uid)}
+    users.each{|u| find_or_create_user(prefixed(u.name), u.uid)}
     
     groups.each do |g|
-      group = find_or_create_group g.name, g.gid
-      update_group_memberships group, g.members.map{ |m| m.name rescue m } # WTF
+      group = find_or_create_group prefixed(g.name), g.gid
+      update_group_memberships group, g.members.map{ |m| m.name rescue m } # WTF sometimes members are strings, sometimes User objects???
     end
   end
 
@@ -44,11 +40,6 @@ module Conjur::Ldap::Roles
   def prefix; options[:prefix] end
   def owner; options[:owner] end
   def save_passwords?; options[:save_passwords] end
-
-  def new_roles
-    @new_roles ||= []
-  end
-
 
   private
 
@@ -80,28 +71,28 @@ module Conjur::Ldap::Roles
   # Find or create a Conjur user corresponding to the LDAP user
   #
   # @param [String] username the LDAP username
+  # @param [String, Fixnum] uid the LDAP uidNumber
   # @return [Conjur::User] the user
   def find_or_create_user username, uid
-    find_or_create :user, username, ownerid: owner.roleid, uidnumber: uid do |user|
-      save_user_password(user) if save_passwords?
+    uid = uid.to_i
+    user = self.user(username)
+    if user.exists? # TODO also check for ownership
+      user.update uidnumber: uid
+    else
+      user = create_user username, uidnumber: uid, ownerid: owner.roleid
     end
+    user
   end
 
   def find_or_create_group groupname, gid
-    # TODO use gid, but HOW?
-    find_or_create :group, groupname, ownerid: owner.roleid
-  end
-
-
-  def find_or_create kind, id, opts = {}
-    role_name = send(:"ldap_#{kind}", id)
-    role = send(kind.to_sym, role_name)
-    unless role.exists?
-      role = send(:"create_#{kind}", role_name, opts)
-      new_roles << role.role
-      yield role if block_given?
+    gid = gid.to_i
+    group = self.group(groupname)
+    if group.exists?
+      group.update gidnumber: gid
+    else
+      group = create_group groupname, gidnumber: gid, ownerid: owner.roleid
     end
-    role
+    group
   end
 
   def save_user_password user
@@ -116,7 +107,7 @@ module Conjur::Ldap::Roles
   def update_group_memberships group, usernames
     members = group.role.members.reject{|grant| grant.member.kind != 'user'}.map{|grant| grant.member.identifier}
 
-    usernames.map{|u| ldap_user(u)}.each do |username|
+    usernames.map{|u| prefixed(u)}.each do |username|
       if members.member?(username)
         members.delete(username)
       else
@@ -129,26 +120,16 @@ module Conjur::Ldap::Roles
     end
   end
 
-  # TODO refactor
-  # Create a namespaced ldap username
-  def ldap_user username
-    prefixed username
-  end
-
   def full_user_id username
     [Conjur.configuration.account, 'user', username].join ':'
   end
 
-  def ldap_group groupname
-    prefixed groupname
-  end
-
   def prefixed name
-    "#{(prefix.nil? || prefix.empty?) ? 'ldap' : prefix}-#{name}"
+    
   end
 
   def user_password_variable user
-    create_variable 'text/plain', 'conjur-api-key', id: "#{user.login}/password",ownerid: owner.roleid
+    create_variable 'text/plain', 'conjur-api-key', id: "#{user.login}/api-key", ownerid: owner.roleid
   end
 
 end

@@ -49,6 +49,7 @@ module Conjur::Ldap::Directory
         user.groups << group
       end
     end
+    
     Structure.new(groups_by_gid.values, users)
   end
 end
