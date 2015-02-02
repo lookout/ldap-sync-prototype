@@ -120,7 +120,7 @@ module Conjur::Ldap::Roles
       if members.member?(username)
         members.delete(username)
       else
-        group.add_member full_user_id(username), acting_as: owner.roleid
+        group.add_member full_user_id(username)
       end
     end
 
