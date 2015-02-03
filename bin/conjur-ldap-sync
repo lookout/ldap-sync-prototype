@@ -21,10 +21,9 @@ class App
   options[:save_passwords] = false
   options[:ldap_ids] = true
   options[:allow_id_conflicts] = false
+  options[:prefix] = ENV['CONJUR_LDAP_SYNC_PREFIX']
   
   on '--owner OWNER', 'Role that will own all groups, users, and variables created'
-
-  on '--prefix PREFIX', 'Prefix to use for all created assets'
 
   on('--save-passwords', 'When present, passwords will be saved to variables'){ options[:save_passwords] = true}
   
