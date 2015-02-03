@@ -2,6 +2,8 @@
 # for role manipulation used in ldap-sync.
 
 module Conjur::Ldap::Roles
+  include Conjur::Ldap::Logging
+  
   # Modifies LDAP roles in Conjur to reflect give  LDAP structure
   # 
   # LDAP groups are mapped to Conjur groups, and LDAP users to Conjur 
@@ -22,6 +24,8 @@ module Conjur::Ldap::Roles
   def sync_to target, opts
     @options = normalize_options opts
     
+    logger.debug "self.prefix=#{prefix}"
+    
     users = target.users
     groups = target.groups
     
@@ -36,7 +40,7 @@ module Conjur::Ldap::Roles
 
   # @!attribute r frozen hash containing our options.
   attr_reader :options
-  
+
   def prefix; options[:prefix] end
   def owner; options[:owner] end
   def save_passwords?; options[:save_passwords] end
@@ -45,9 +49,6 @@ module Conjur::Ldap::Roles
 
   # Normalize options given to #sync_to.
   def normalize_options opts
-     opts.slice(:owner,:prefix, :save_passwords)
-         .reverse_merge(save_passwords: false,
-                        prefix: default_prefix)
     opts[:owner] = find_role(opts[:owner] || current_role)
     opts.freeze
     opts
@@ -64,6 +65,7 @@ module Conjur::Ldap::Roles
   # @return Conjur::Role
   def find_role id_or_role
     self.role(id_or_role).tap do |role|
+      logger.debug "looking up role #{role}"
       raise "Role #{id_or_role} does not exist!" unless role.exists?
     end
   end
@@ -76,10 +78,14 @@ module Conjur::Ldap::Roles
   def find_or_create_user username, uid
     uid = uid.to_i
     user = self.user(username)
+    log.debug "find_or_create_user #{username}, #{uid}"
     if user.exists? # TODO also check for ownership
       user.update uidnumber: uid
     else
       user = create_user username, uidnumber: uid, ownerid: owner.roleid
+      if save_passwords?
+        user_password_variable(user).add_value user.api_key
+      end
     end
     user
   end
@@ -87,10 +93,15 @@ module Conjur::Ldap::Roles
   def find_or_create_group groupname, gid
     gid = gid.to_i
     group = self.group(groupname)
-    if group.exists?
-      group.update gidnumber: gid
+    if group.exists? and group.attributes['gidnumber'].to_s != gid.to_s
+      # Conjur::Group doesn't have an update method!  However, we should be able to 
+      # change it's attributes using a PUT request, righ?
+      logger.debug{ "saving group #{groupname}, had uid #{group.attributes['gidnumber']}, updated to #{gid}"}
+      group.attributes['gidnumber'] = gid.to_i # since we're sending it as json, we have to have an int
+      group.save
     else
       group = create_group groupname, gidnumber: gid, ownerid: owner.roleid
+      logger.debug{ "created group #{groupname} with gid #{gid}" }
     end
     group
   end
@@ -125,10 +136,15 @@ module Conjur::Ldap::Roles
   end
 
   def prefixed name
-    
+    if prefix and not prefix.empty?
+      "#{prefix}-#{name}"
+    else
+      name
+    end
   end
 
   def user_password_variable user
+    logger.debug{ "creating password in variable '#{user.login}/api-key'" }
     create_variable 'text/plain', 'conjur-api-key', id: "#{user.login}/api-key", ownerid: owner.roleid
   end
 

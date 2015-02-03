@@ -1,4 +1,6 @@
 require 'conjur/api'
+require 'conjur/ldap/logging'
+require 'conjur/ldap/reporting'
 require 'conjur/ldap/sync/version'
 require 'conjur/ldap/directory'
 require 'conjur/ldap/roles'
@@ -8,6 +10,9 @@ require 'pp'
 module Conjur
   module Ldap
     module Sync
+      include Conjur::Ldap::Logging
+      include Conjur::Ldap::Reporting
+      
       module_function
 
       # Entry point for sync operation
@@ -19,7 +24,21 @@ module Conjur
       # @option opts [Boolean] :save_passwords (false) whether to save credentials for users created
       #   in variables.
       def run_sync opts
+        logger.debug{ "run_sync(#{opts})" }
+        logger.info 'LDAP sync started'
         conjur.sync_to directory.posix_groups, opts
+        logger.info 'LDAP sync completed successfully'
+      rescue => e
+        case e 
+          when RestClient::Exception
+            logger.error "LDAP sync failed: #{e}\n\t#{e.response.body}"
+          else
+            logger.error "LDAP sync failed: #{e}"
+        end
+        logger.error "backtrace:\n#{$@.join "\n\t"}"
+        raise e
+      ensure
+        reporter.dump
       end
 
       def directory
@@ -37,6 +56,7 @@ module Conjur
         end
         @conjur
       end
+
     end
   end
 end
