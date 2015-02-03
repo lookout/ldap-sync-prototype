@@ -10,10 +10,11 @@ end
 
 
 When %r{^I( successfully)? sync(?: with options "(.*)")?$} do |successfully, options|
-  puts "export CONJUR_LDAP_SYNC='#{conjur_prefix}'"
-  set_env 'CONJUR_LDAP_SYNC', conjur_prefix
-  puts "conjur-ldap-sync #{options || ''}"
-  run_simple unescape("conjur-ldap-sync #{options || ''}"), !!successfully
+  puts "export CONJUR_LDAP_SYNC_PREFIX='#{conjur_prefix}'"
+  set_env 'CONJUR_LDAP_SYNC_PREFIX', conjur_prefix
+  command = mangle_name "conjur-ldap-sync #{options}"
+  puts "run: #{command}"
+  run_simple unescape(command), !!successfully
 end
 
 Then %r{^it should (not )?be owned by "(.*?)"$} do |neg, owner|

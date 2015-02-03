@@ -12,8 +12,14 @@ module LdapHelpers
   
   def random_id_hash
     Hash.new do |h,k|
-      h[k] = rand(5_000_000)
+      # We need to have a value > (~50000) to avoid conflicts with generated
+      # uids, and < (1 << 31) - 1 to fit in a postges integer field.
+      h[k] = rand((1 << 31) - 50001) + 50000
     end
+  end
+  
+  def reset_id_hashes
+    @uids = @gids = nil
   end
   
   def insert_uids string
@@ -64,5 +70,6 @@ LdapHelpers.configure_ldap_client
 
 World LdapHelpers
 After do
+  reset_id_hashes
   stop_ldap_server
 end
