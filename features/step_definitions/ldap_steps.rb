@@ -1,4 +1,4 @@
-Given(/^(?:I initially have an )?LDAP database with:$/) do |string|
+Given(/^(?:I initially have )?(?:an )?LDAP database with:$/) do |string|
   serve_ldap insert_uids(string)
 end
 
