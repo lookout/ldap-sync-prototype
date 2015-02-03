@@ -10,11 +10,10 @@ end
 
 
 When %r{^I( successfully)? sync(?: with options "(.*)")?$} do |successfully, options|
-  options ||= ''
-  options << ' --prefix <prefix>' unless options.index '--prefix'
-  command = mangle_name "conjur-ldap-sync #{options}"
-  # puts "RUNNING #{command}"
-  step "I#{successfully ||' '} run `#{command}`"
+  puts "export CONJUR_LDAP_SYNC='#{conjur_prefix}'"
+  set_env 'CONJUR_LDAP_SYNC', conjur_prefix
+  puts "conjur-ldap-sync #{options || ''}"
+  run_simple unescape("conjur-ldap-sync #{options || ''}"), !!successfully
 end
 
 Then %r{^it should (not )?be owned by "(.*?)"$} do |neg, owner|
@@ -54,4 +53,11 @@ Then %r{^a user named "(.*?)" exists and has the uid for "(.*?)"} do |username, 
   user = conjur.user(mangle_name username)
   expect(user).to exist
   expect(user.attributes['uidnumber'].to_s).to eq(uid.to_s)
+end
+
+Then %r{^a group named "(.*?)" exists and has the gid for "(.*?)"$} do |groupname, gidfor|
+  gid = gids[gidfor]
+  group = conjur.group mangle_name(groupname)
+  expect(group).to exist
+  expect(group.attributes['gidnumber'].to_s).to eq(gid.to_s)
 end
