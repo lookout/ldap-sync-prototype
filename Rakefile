@@ -63,4 +63,5 @@ Rake::RDocTask.new do |rd|
 end
 
 task :default => [:spec,:features]
+task :jenkins => [:default]
 

@@ -11,3 +11,4 @@ conjur-devldap.pem
 .env
 .rvmrc
 .rspec
+*.log

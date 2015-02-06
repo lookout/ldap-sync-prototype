@@ -25,6 +25,7 @@ module Conjur::Ldap::Roles
     @options = normalize_options opts
     
     logger.debug "self.prefix=#{prefix}"
+    logger.debug "groups=#{target.groups}, #{target.users}"
     
     users = target.users
     groups = target.groups
@@ -93,12 +94,9 @@ module Conjur::Ldap::Roles
   def find_or_create_group groupname, gid
     gid = gid.to_i
     group = self.group(groupname)
-    if group.exists? and group.attributes['gidnumber'].to_s != gid.to_s
-      # Conjur::Group doesn't have an update method!  However, we should be able to 
-      # change it's attributes using a PUT request, righ?
-      logger.debug{ "saving group #{groupname}, had uid #{group.attributes['gidnumber']}, updated to #{gid}"}
-      group.attributes['gidnumber'] = gid.to_i # since we're sending it as json, we have to have an int
-      group.save
+    logger.debug{ "checking for existence of #{groupname}: #{group.exists?}" }
+    if group.exists?
+      group.update(gidnumber: gid) unless gid == group.attributes['gidnumber']
     else
       group = create_group groupname, gidnumber: gid, ownerid: owner.roleid
       logger.debug{ "created group #{groupname} with gid #{gid}" }

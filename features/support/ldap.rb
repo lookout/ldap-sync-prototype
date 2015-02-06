@@ -33,7 +33,6 @@ module LdapHelpers
     @ldifile = Tempfile.new ['ldif', '.ldif']
     @ldifile.write ldif
     @ldifile.close
-
     @ladle = Ladle::Server.new port: 3897,
         ldif: @ldifile.path,
         domain: 'dc=conjur,dc=net',
