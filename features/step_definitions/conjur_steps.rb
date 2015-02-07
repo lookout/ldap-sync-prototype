@@ -62,3 +62,14 @@ Then %r{^a group named "(.*?)" exists and has the gid for "(.*?)"$} do |groupnam
   expect(group).to exist
   expect(group.attributes['gidnumber'].to_s).to eq(gid.to_s)
 end
+
+Then %r{^the report should have actions:$} do |table|
+  actual_reports = JSON.parse(only_processes.last.stdout)['actions']
+  puts "report: #{actual_reports}"
+  expected_reports = expected_actions_from_table(table)
+  expect(actual_reports.length).to eq(expected_reports.length)
+  expected_reports.zip(actual_reports).each do |expected, actual|
+    match_action expected, actual
+  end
+end
+

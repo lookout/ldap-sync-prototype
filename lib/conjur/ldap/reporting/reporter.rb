@@ -1,11 +1,15 @@
 module Conjur::Ldap
   module Reporting
     class Reporter
+      include Conjur::Ldap::Logging
+
       def initialize
+        log.debug "reporter created!"
         @reports = []
       end
 
       def dump io=$stdout
+        log.debug "dumping #{@reports}\n#{actions}"
         io.write(to_json)
       end
       
@@ -14,14 +18,10 @@ module Conjur::Ldap
       end
 
       def as_json
-        {
-            actions: actions,
-            succeeded: succeeded,
-            failed: failed
-        }
+        {actions: actions}
       end
 
-      # return a snapshot of reportss
+      # return a snapshot of reports
       def reports
         @reports.dup
       end
@@ -30,45 +30,37 @@ module Conjur::Ldap
         @reports.map(&:as_json)
       end
 
-      def failed
-        @reports.select(&:failed?).map(&:as_json)
-      end
-
-      def succeeded
-        @reports.select(&:succeeded?).map(&:as_json)
-      end
-
-      def report tag, message, extras = {}
-        @reports << (report = Report.new tag, message, extras)
+      def report tag, extras = {}
+        log.debug "report #{tag}, #{extras}"
+        @reports << (report = Report.new tag, extras)
         begin
-          yield if block_given?
-          report.succeed
+          (yield if block_given?).tap{ report.succeed! }
         rescue => ex
-          report.fail ex
-          raise ex
+          logger.error "error in action for #{tag}: #{ex}\n\t#{ex.backtrace.join("\n\t")}"
+          report.fail! ex
+          nil
         end
       end
 
       class Report
 
-        def initialize tag, message, extras
+        def initialize tag, extras
           @tag = tag
-          @message = message
           @extras = extras || {}
           @extras[:result] = :pending
         end
 
-        attr_reader :tag, :message
+        attr_reader :tag
 
         def extras
           @extras ||= {}
         end
 
-        def succeed
+        def succeed!
           extras[:result] = :success
         end
 
-        def fail ex
+        def fail! ex
           extras[:result] = :failure
           extras[:error] = ex.to_s
         end
@@ -82,7 +74,7 @@ module Conjur::Ldap
         end
 
         def as_json
-          {tag: tag, message: message}.merge(extras)
+          {tag: tag}.merge(extras)
         end
 
         def to_json

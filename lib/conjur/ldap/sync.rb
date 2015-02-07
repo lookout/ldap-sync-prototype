@@ -1,6 +1,7 @@
 require 'conjur/api'
 require 'conjur/ldap/logging'
 require 'conjur/ldap/reporting'
+require 'conjur/ldap/reporting/helpers'
 require 'conjur/ldap/sync/version'
 require 'conjur/ldap/directory'
 require 'conjur/ldap/roles'

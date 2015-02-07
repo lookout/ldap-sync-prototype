@@ -5,15 +5,22 @@ module Conjur
       def self.included base
         base.extend self
       end
+
       
-      extend self
-      
-      def report *args, &block
+      def self.report *args, &block
         reporter.report *args, &block
       end
 
-      def reporter
+      def report *args, &block
+        Conjur::Ldap::Reporting.report *args, &block
+      end
+
+      def self.reporter
         @reporter ||= Reporter.new
+      end
+
+      def reporter
+        Conjur::Ldap::Reporting.reporter
       end
 
     end

@@ -3,7 +3,8 @@
 
 module Conjur::Ldap::Roles
   include Conjur::Ldap::Logging
-  
+  include Conjur::Ldap::Reporting
+  include Conjur::Ldap::Reporting::Helpers
   # Modifies LDAP roles in Conjur to reflect give  LDAP structure
   # 
   # LDAP groups are mapped to Conjur groups, and LDAP users to Conjur 
@@ -23,10 +24,6 @@ module Conjur::Ldap::Roles
   #   in variables.
   def sync_to target, opts
     @options = normalize_options opts
-    
-    logger.debug "self.prefix=#{prefix}"
-    logger.debug "groups=#{target.groups}, #{target.users}"
-    
     users = target.users
     groups = target.groups
     
@@ -35,7 +32,7 @@ module Conjur::Ldap::Roles
     
     groups.each do |g|
       group = find_or_create_group prefixed(g.name), g.gid
-      update_group_memberships group, g.members.map{ |m| m.name rescue m } # WTF sometimes members are strings, sometimes User objects???
+      update_group_memberships(group, g.members.map{ |m| m.name rescue m }) unless group.nil?
     end
   end
 
@@ -44,7 +41,7 @@ module Conjur::Ldap::Roles
 
   def prefix; options[:prefix] end
   def owner; options[:owner] end
-  def save_passwords?; options[:save_passwords] end
+  def save_passwords?; options[:save_api_keys] end
 
   private
 
@@ -66,7 +63,6 @@ module Conjur::Ldap::Roles
   # @return Conjur::Role
   def find_role id_or_role
     self.role(id_or_role).tap do |role|
-      logger.debug "looking up role #{role}"
       raise "Role #{id_or_role} does not exist!" unless role.exists?
     end
   end
@@ -79,13 +75,13 @@ module Conjur::Ldap::Roles
   def find_or_create_user username, uid
     uid = uid.to_i
     user = self.user(username)
-    log.debug "find_or_create_user #{username}, #{uid}"
-    if user.exists? # TODO also check for ownership
-      user.update uidnumber: uid
+    if user.exists?
+      report_update_user(username, uid){ user.update uidnumber: uid} if user.attributes['uidnumber'] != uid
     else
-      user = create_user username, uidnumber: uid, ownerid: owner.roleid
-      if save_passwords?
-        user_password_variable(user).add_value user.api_key
+      user = report_create_user(username, uid){ create_user username, uidnumber: uid, ownerid: owner.roleid }
+      if user and save_passwords?
+        variable = user_password_variable(user)
+        report_save_api_key(username,variable.id){ variable.add_value user.api_key }
       end
     end
     user
@@ -94,19 +90,12 @@ module Conjur::Ldap::Roles
   def find_or_create_group groupname, gid
     gid = gid.to_i
     group = self.group(groupname)
-    logger.debug{ "checking for existence of #{groupname}: #{group.exists?}" }
     if group.exists?
-      group.update(gidnumber: gid) unless gid == group.attributes['gidnumber']
+      report_update_group(groupname, gid){group.update(gidnumber: gid)} if group.attributes['gidnumber'] != gid
     else
-      group = create_group groupname, gidnumber: gid, ownerid: owner.roleid
-      logger.debug{ "created group #{groupname} with gid #{gid}" }
+      group = report_create_group(groupname, gid){ create_group groupname, gidnumber: gid, ownerid: owner.roleid }
     end
     group
-  end
-
-  def save_user_password user
-    password = user.password || user.api_key
-    user_password_variable(user).add_value(password)
   end
 
   
@@ -120,12 +109,12 @@ module Conjur::Ldap::Roles
       if members.member?(username)
         members.delete(username)
       else
-        group.add_member full_user_id(username)
+        report_add_member(group.id, username){ group.add_member full_user_id(username) }
       end
     end
 
     members.each do |member|
-      group.remove_member(full_user_id(member))
+      report_remove_member(group.id, member){ group.remove_member(full_user_id(member)) }
     end
   end
 
@@ -142,7 +131,6 @@ module Conjur::Ldap::Roles
   end
 
   def user_password_variable user
-    logger.debug{ "creating password in variable '#{user.login}/api-key'" }
     create_variable 'text/plain', 'conjur-api-key', id: "#{user.login}/api-key", ownerid: owner.roleid
   end
 

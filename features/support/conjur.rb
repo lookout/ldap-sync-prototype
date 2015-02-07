@@ -45,6 +45,23 @@ module ConjurHelpers
   attr_accessor :run_sync_called
   alias run_sync_called? run_sync_called
 
+  def expected_actions_from_table table
+    table = table.hashes unless table.kind_of?(Array)
+    [].tap do |result|
+      table.each do |hash|
+        extra = insert_uids mangle_name(hash['extra_json'])
+        extra = extra.empty? ? {} : JSON.parse(extra)
+        result << {'tag' => hash['tag']}.merge(extra)
+      end
+    end
+  end
+
+  def match_action expected, actual
+    expected.each do |key, value|
+      expect(value).to eq(actual[key])
+    end
+  end
+
 end
 
 World ConjurHelpers

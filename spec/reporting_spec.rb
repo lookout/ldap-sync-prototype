@@ -3,6 +3,13 @@ require 'spec_helper'
 describe Conjur::Ldap::Reporting do
   subject { Object.new.extend(described_class) }
 
+  before do
+    ENV['CONJUR_LDAP_SYNC_LOG_LEVEL'] = 'FATAL'
+    subject.reporter.instance_eval do
+      @reports = []
+    end
+  end
+
   it 'should respond to :report' do
     expect(subject).to respond_to(:report)
   end
@@ -26,36 +33,36 @@ describe Conjur::Ldap::Reporting do
 
     describe 'after calling report(:some_tag, "hi", foo: "bar")' do
       context 'without a block' do
-        it_should_have_report tag: :some_tag, message: 'hi', foo: 'bar', result: :success do
-          subject.report :some_tag, 'hi', foo: 'bar'
+        it_should_have_report tag: :some_tag, foo: 'bar', result: :success do
+          subject.report :some_tag, foo: 'bar'
         end
       end
       context 'with a successful block' do
-        it_should_have_report tag: :some_tag, message: 'hi', foo: 'bar', result: :success do
+        it_should_have_report tag: :some_tag, foo: 'bar', result: :success do
           called = false
-          subject.report :some_tag, 'hi', foo: 'bar' do
+          subject.report :some_tag, foo: 'bar' do
             called = true
           end
           expect(called).to be_truthy
         end
       end
       context 'with a block that raises' do
-        it_should_have_report tag: :some_tag, message: 'hi', foo: 'bar', result: :failure, error: 'BOOM' do
+        it_should_have_report tag: :some_tag, foo: 'bar', result: :failure, error: 'BOOM' do
           expect do
-            subject.report :some_tag, 'hi', foo: 'bar' do
+            subject.report :some_tag, foo: 'bar' do
               raise 'BOOM'
             end
-          end.to raise_exception
+          end.to_not raise_exception
         end
       end
     end
     
     describe 'after three calls to report' do
       before do
-        subject.report :first, 'The first call'
-        subject.report(:second, 'The second call', some_key: 'blah'){}
+        subject.report :first
+        subject.report(:second, some_key: 'blah'){}
         begin
-          subject.report(:third, 'This fails'){ raise 'BOOM' }
+          subject.report(:third){ raise 'BOOM' }
         rescue
           # empty
         end
@@ -74,11 +81,10 @@ describe Conjur::Ldap::Reporting do
         
         describe 'the parsed JSON' do
           let(:json){ JSON.parse dumped }
-          it 'should be a hash with keys "actions", "succeeded", and "failed"' do
-            # note that we're taking advantage of the fact that JSON hashes and ruby hashes are ordered.  We 
-            # want this order in particular for readability.
+          it 'should be a hash with a single key "actions"' do
             expect(json).to be_kind_of Hash
-            expect(json.keys).to eq(%w(actions succeeded failed))
+            expect(json.size).to eq(1)
+            expect(json.keys).to eq(%w(actions))
           end
           
           describe 'json["actions"]' do
@@ -92,28 +98,6 @@ describe Conjur::Ldap::Reporting do
             end
             it 'should preserve extras' do
               expect(actions[1]['some_key']).to eq('blah')
-            end
-          end
-          
-          describe 'json["failed"]' do
-            let(:failed){ json['failed'] }
-            it 'should be an array with one element' do
-              expect(failed).to be_kind_of(Array)
-              expect(failed.length).to eq(1)
-            end
-            it 'should contain the failed report' do
-              expect(failed[0]['message']).to eq('This fails')
-            end
-          end
-          
-          describe 'json["succeeded"]' do 
-            let(:succeeded){ json['succeeded'] }
-            it 'should be an array with two elements' do
-              expect(succeeded).to be_kind_of(Array)
-              expect(succeeded.length).to eq(2)
-            end
-            it 'should contain the reports that succeeded' do
-              expect(succeeded.map{|r| r['tag']}).to eq(%w(first second))
             end
           end
         end
