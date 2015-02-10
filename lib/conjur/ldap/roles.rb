@@ -59,11 +59,12 @@ module Conjur::Ldap::Roles
     username.remove /^.*\//
   end
 
-  # Finds the owner role
+  # Finds the owner role.  The role must exist and be a member of current_role
   # @return Conjur::Role
   def find_role id_or_role
     self.role(id_or_role).tap do |role|
       raise "Role #{id_or_role} does not exist!" unless role.exists?
+      raise "Role #{id_or_role} is not a member of #{current_role.roleid}" unless role.member_of?(current_role)
     end
   end
 
