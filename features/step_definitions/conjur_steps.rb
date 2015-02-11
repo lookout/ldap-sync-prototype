@@ -73,3 +73,15 @@ Then %r{^the report should have actions:$} do |table|
   end
 end
 
+Then %r{^a group named "(.*?)" exists and does not have gid (\d+)} do |name, gid|
+  group = conjur.group mangle_name(name)
+  expect(group).to exist
+  expect(group.attributes['gidnumber'].to_s).to_not eq(gid.to_s)
+end
+
+
+Then %r{^a user named "(.*?)" exists and does not have uid (\d+)} do |name, uid|
+  user = conjur.user mangle_name(name)
+  expect(users).to exist
+  expect(user.attributes['gidnumber'].to_s).to_not eq(uid.to_s)
+end

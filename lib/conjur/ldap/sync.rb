@@ -25,10 +25,7 @@ module Conjur
       # @option opts [Boolean] :save_passwords (false) whether to save credentials for users created
       #   in variables.
       def run_sync opts
-        logger.debug{ "run_sync(#{opts})" }
-        logger.info 'LDAP sync started'
         conjur.sync_to directory.posix_groups, opts
-        logger.info 'LDAP sync completed successfully'
       rescue => e
         case e 
           when RestClient::Exception

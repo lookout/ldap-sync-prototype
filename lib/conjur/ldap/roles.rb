@@ -5,13 +5,13 @@ module Conjur::Ldap::Roles
   include Conjur::Ldap::Logging
   include Conjur::Ldap::Reporting
   include Conjur::Ldap::Reporting::Helpers
-  # Modifies LDAP roles in Conjur to reflect give  LDAP structure
+  # Modifies LDAP roles in Conjur to reflect the given LDAP structure
   # 
   # LDAP groups are mapped to Conjur groups, and LDAP users to Conjur 
   # users.  Their names are preserved as-is, and their uidnumber and gidnumber
-  # are set from the LDAP gidNumber and uidNumber fields in LDAP.
+  # are set from the LDAP gidNumber and uidNumber.
   # 
-  # Because it's not allowed to delete roles in Conjur, any roles that are
+  # Because you can't delete roles Conjur, any roles that are
   # deleted in upstream are simply removed from all membership relations
   # (except the admin one).
   #
@@ -20,8 +20,11 @@ module Conjur::Ldap::Roles
   # @option opts [String] :owner (logged in conjur user) the role that will own
   #   all created assets.
   # @option opts [String] :prefix (created from owner) prefix to namespace created assets
-  # @option opts [Boolean] :save_passwords (false) whether to save credentials for users created
+  # @option opts [Boolean] :save_api_keys (false) whether to save credentials for users created
   #   in variables.
+  # @option opts [Boolean] :import_ldap_ids (true) whether to import uids and gids from LDAP
+  #   This should not generally be set to false, but it gives an 'escape hatch' to allow import
+  #   in the face of collisions with existing Conjur roles.
   def sync_to target, opts
     @options = normalize_options opts
     users = target.users
@@ -48,8 +51,7 @@ module Conjur::Ldap::Roles
   # Normalize options given to #sync_to.
   def normalize_options opts
     opts[:owner] = find_role(opts[:owner] || current_role)
-    opts.freeze
-    opts
+    {save_api_keys: false, import_ldap_ids: true}.merge(opts).freeze
   end
 
   # Default value for our asset prefix, generated from the conjur username
