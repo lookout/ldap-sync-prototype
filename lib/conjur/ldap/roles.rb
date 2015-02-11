@@ -79,9 +79,11 @@ module Conjur::Ldap::Roles
     uid = uid.to_i
     user = self.user(username)
     if user.exists?
-      report_update_user(username, uid){ user.update uidnumber: uid} if user.attributes['uidnumber'] != uid
+      report_update_user(username, uid){ user.update uidnumber: uid} if not ignore_ldap_ids? and user.attributes['uidnumber'] != uid
     else
-      user = report_create_user(username, uid){ create_user username, uidnumber: uid, ownerid: owner.roleid }
+      opts = {ownerid: owner.roleid}
+      opts = opts.merge(uidnumber: uid) unless ignore_ldap_ids?
+      user = report_create_user(username, uid){ create_user username, opts}
       if user and save_passwords?
         variable = user_password_variable(user)
         report_save_api_key(username,variable.id){ variable.add_value user.api_key }
@@ -94,9 +96,11 @@ module Conjur::Ldap::Roles
     gid = gid.to_i
     group = self.group(groupname)
     if group.exists?
-      report_update_group(groupname, gid){group.update(gidnumber: gid)} if group.attributes['gidnumber'] != gid
+      report_update_group(groupname, gid){group.update(gidnumber: gid)} if not ignore_ldap_ids? and group.attributes['gidnumber'] != gid
     else
-      group = report_create_group(groupname, gid){ create_group groupname, gidnumber: gid, ownerid: owner.roleid }
+      opts = {ownerid: owner.roleid}
+      opts = opts.merge(gidnumber: gid) unless ignore_ldap_ids?
+      group = report_create_group(groupname, gid){ create_group groupname, opts }
     end
     group
   end
