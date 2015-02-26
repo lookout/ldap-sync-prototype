@@ -30,7 +30,7 @@ module Conjur::Ldap
     # @abstract
     # @return [Array<Conjur::Ldap::Model::Group>]
     def groups
-      raise NotImplemented, "Driver#groups is abstract"
+      raise NotImplementedError, 'Driver#groups is abstract'
     end
 
     # Subclasses implement this to return an array of Conjur::Ldap::Model::User.
@@ -39,7 +39,7 @@ module Conjur::Ldap
     # @api private
     # @return [Array<Conjur::Ldap::Model::User>]
     def users
-      raise NotImplemented, "Driver#groups is abstract"
+      raise NotImplementedError, 'Driver#groups is abstract'
     end
   end
 end

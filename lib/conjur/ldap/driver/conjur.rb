@@ -1,14 +1,17 @@
 require 'treequel'
 require 'conjur/ldap/driver'
 
+
+## A driver that handles Conjur LDAP's idiosyncrasies
 class Conjur::Ldap::Driver
   class Conjur < self
     attr_reader :conjur_account, :host_id, :host_api_key
 
     def initialize conjur_account, host_id, host_api_key
+      @conjur_account = conjur_account
       @host_id = host_id
       @host_api_key = host_api_key
-      @conjur_account = conjur_accounts
+      @conjur_account = conjur_account
     end
 
     def groups
