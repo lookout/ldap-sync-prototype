@@ -43,9 +43,7 @@ include Rake::DSL
 Bundler::GemHelper.install_tasks
 
 
-RSpec::Core::RakeTask.new do |t|
-  # Put spec opts in a file named .rspec in root
-end
+RSpec::Core::RakeTask.new
 
 
 CUKE_RESULTS = 'results.html'
@@ -62,6 +60,14 @@ Rake::RDocTask.new do |rd|
   rd.rdoc_files.include("README.rdoc","lib/**/*.rb","bin/**/*")
 end
 
+task :test => [:start]
+
+task :start_appliance do
+  require
+end
+
 task :default => [:spec,:features]
 task :jenkins => [:default]
+
+
 

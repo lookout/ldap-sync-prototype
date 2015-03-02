@@ -7,11 +7,11 @@ class Conjur::Ldap::Driver
   class Conjur < self
     attr_reader :conjur_account, :host_id, :host_api_key
 
-    def initialize conjur_account, host_id, host_api_key
-      @conjur_account = conjur_account
-      @host_id = host_id
-      @host_api_key = host_api_key
-      @conjur_account = conjur_account
+    def initialize options
+      [:conjur_accoun, :host_id, :host_api_key].each do |opt|
+        raise ArgumentError, "missing required option #{opt}" unless options.member?(opt)
+        instance_variable_set :"@#{opt}", options[opt]
+      end
     end
 
     def groups
