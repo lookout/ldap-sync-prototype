@@ -46,28 +46,28 @@ Bundler::GemHelper.install_tasks
 RSpec::Core::RakeTask.new
 
 
+PROJECT_PATH=File.dirname(__FILE__)
+$stderr.puts "DEBUG PROJECT_PATH is #{PROJECT_PATH}"
 CUKE_RESULTS = 'results.html'
 CLEAN << CUKE_RESULTS
-Cucumber::Rake::Task.new(:features) do |t|
-  t.cucumber_opts = "features --format html -o #{CUKE_RESULTS} --format pretty --no-source -x"
-  t.fork = false
+
+desc "Move some environment variables around for the cukes"
+task :environment do
+  if ENV['CONJUR_TEST_ENVIRONMENT'] == 'acceptance'
+    ENV['CONJUR_APPLIANCE_URL'] = "https://#{ENV['CONJUR_APPLIANCE_HOSTNAME']}/api"
+    ENV['CONJUR_USERNAME'] = 'admin'
+    ENV['CONJUR_API_KEY']  = File.read(ENV['CONJUR_ADMIN_PASSWORD_FILE']).chomp
+    ENV['CONJUR_ACCOUNT'] ||= 'ci'
+    $stderr.puts ENV.inspect
+  else
+    $stderr.puts "WRONG CONJUR_TEST_ENVIRONMENT: #{ENV['CONJUR_TEST_ENVIRONMENT']}"
+  end
 end
 
-Rake::RDocTask.new do |rd|
-  
-  rd.main = "README.rdoc"
-  
-  rd.rdoc_files.include("README.rdoc","lib/**/*.rb","bin/**/*")
+task :features => [:environment] do
+  `cd #{PROJECT_PATH} && cucumber --format html -o #{CUKE_RESULTS} --format pretty --no-source -x`
 end
 
-task :test => [:start]
-
-task :start_appliance do
-  require
-end
-
-task :default => [:spec,:features]
-task :jenkins => [:default]
-
+task :test => [:spec, :features]
 
 

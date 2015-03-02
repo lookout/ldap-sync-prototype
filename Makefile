@@ -10,7 +10,7 @@ IMAGE_ID=$(IMAGE_NAME):$(BUILD_NUMBER)
 CONJUR_HA=$(CONJUR_DOCKER_REGISTRY)/conjurinc/conjur-ha:$(CONJUR_PLATFORM)
 CONJUR_ADMIN_PASSWORD ?= $(shell uuid | cut -f1 -d '-')
 
-CONJUR_ACCOUNT ?= 'ci'
+CONJUR_ACCOUNT ?= ci
 
 TESTDIR=test
 
@@ -43,7 +43,7 @@ push:
 clean:
 	rm -rf $(TESTDIR)
 
-$(TESTDIR): clean
+$(TESTDIR):
 	mkdir -pv $(TESTDIR)
 
 check:
@@ -56,15 +56,15 @@ endif
 
 conjur: $(TESTDIR) check
 	docker run --rm -t    			           \
-		-e AWS_ACCESS_KEY	            	   \
-		-e AWS_SECRET_KEY	                   \
+		-e AWS_ACCESS_KEY_ID	            	   \
+		-e AWS_SECRET_ACCESS_KEY                   \
 		$(CONJUR_HA) standalone	                   \
 			$(AMI_OPTS)		           \
 			-k $(AWS_KEY_NAME)		   \
 			-o $(CONJUR_ACCOUNT)	           \
 			-p "$(CONJUR_ADMIN_PASSWORD)"      \
             	$(CONJUR_STACK_NAME)                       \
-			> $(TESTDIR)/conjur.stack
+			| tee  $(TESTDIR)/conjur.stack
 	[ -f $(TESTDIR)/conjur.stack ] || exit 1 
 	grep -P 'Public(Ip|DnsName)' $(TESTDIR)/conjur.stack  | cut -f2 | grep '[^[:space:]]' | head -n 1 > $(TESTDIR)/conjur.host
 	echo "$(CONJUR_STACK_NAME)" > $(TESTDIR)/conjur.stackname
@@ -100,25 +100,18 @@ else
 	if [ ! -f $(TESTDIR)/conjur.password] ; then echo "Try to run `make conjur`"; exit 1; fi
 endif
 
+prep: $(TESTDIR)/conjur.password $(TESTDIR)/conjur.host check
 
-acceptance: $(TESTDIR)/conjur.host $(TESTDIR)/conjur.password check
-
-	docker run --cidfile $(CIDFILE)					                \
-		-t                  						        \
-		-e AWS_ACCESS_KEY	            			                \
-		-e AWS_SECRET_KEY	            			                \
-		-e AWS_KEY_NAME								\
-		-e COOKBOOKS_URL							\
+acceptance: prep
+	docker run --cidfile $(CIDFILE)					                        \
+		-t                  						                        \
+		-e CONJUR_ACCOUNT="$(CONJUR_ACCOUNT)"                               \
+		-e CONJUR_TEST_ENVIRONMENT=acceptance                               \
 		-e CONJUR_APPLIANCE_HOSTNAME="$(shell cat $(TESTDIR)/conjur.host)"	\
-		-e KEEP_INSTANCES							\
-		-e COOKBOOKS_URL							\
-		-e FEATURE								\
 		-e CONJUR_ADMIN_PASSWORD_FILE=/tmp/conjur-admin-password	        \
 		-v $(abspath $(TESTDIR)/conjur.password):/tmp/conjur-admin-password	\
-		-e AWS_KEY_FILE=/tmp/aws.pem				                \
-		-v $(abspath $(AWS_KEY_FILE)):/tmp/aws.pem	                        \
 		$(IMAGE_NAME)
-	docker cp $(shell cat $(CIDFILE)):/opt/acceptance-ssh/features/report/ $(TESTDIR)/
+	docker cp $(shell cat $(CIDFILE)):/opt/ldap-sync/features/report/ $(TESTDIR)/
 	docker logs $(shell cat $(CIDFILE)) > $(TESTDIR)/docker.logs
 	docker rm $(shell cat $(CIDFILE))
 	rm -f $(CIDFILE)
