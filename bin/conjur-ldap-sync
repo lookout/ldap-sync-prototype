@@ -19,14 +19,14 @@ class App
   use_log_level_option
 
   options[:save_api_keys] = false
-  options[:import_ldap_ids] = true
+  options[:ignore_ldap_ids] = false
   options[:prefix] = ENV['CONJUR_LDAP_SYNC_PREFIX']
   
   on '--owner OWNER', 'Role that will own all groups, users, and variables created'
 
   on('--save-api-keys', 'When present, passwords will be saved to variables'){ options[:save_api_keys] = true}
 
-  on('--no-ldap-ids', "Don't import LDAP uids and gids"){ options[:import_ldap_ids] = false }
+  #on('--no-ldap-ids', "Don't import LDAP uids and gids"){ options[:ignore_ldap_ids] = true }
 
   go!
 end

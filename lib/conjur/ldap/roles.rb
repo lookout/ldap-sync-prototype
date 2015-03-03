@@ -45,6 +45,7 @@ module Conjur::Ldap::Roles
   def prefix; options[:prefix] end
   def owner; options[:owner] end
   def save_passwords?; options[:save_api_keys] end
+  def ignore_ldap_ids?; options[:ignore_ldap_ids] end
 
   private
 
@@ -66,7 +67,7 @@ module Conjur::Ldap::Roles
   def find_role id_or_role
     self.role(id_or_role).tap do |role|
       raise "Role #{id_or_role} does not exist!" unless role.exists?
-      raise "Role #{id_or_role} is not a member of #{current_role.roleid}" unless role.member_of?(current_role)
+      raise "Role #{current_role.roleid} is not a member of #{id_or_role}" unless current_role.member_of?(role)
     end
   end
 

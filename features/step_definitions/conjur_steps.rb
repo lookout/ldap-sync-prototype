@@ -49,6 +49,11 @@ Given %r{^a role named "(.*?)"$} do |rolename|
   roles_by_name[rolename] = find_or_create_role(rolename)
 end
 
+And %r{^I grant the service role to "(.*?)"$} do |role|
+  role = conjur.role mangle_name(role)
+  service_role.grant_to role
+end
+
 Then %r{^a user named "(.*?)" exists and has the uid for "(.*?)"} do |username, uidfor|
   uid = uids[uidfor]
   user = conjur.user(mangle_name username)
@@ -82,6 +87,6 @@ end
 
 Then %r{^a user named "(.*?)" exists and does not have uid (\d+)} do |name, uid|
   user = conjur.user mangle_name(name)
-  expect(users).to exist
+  expect(user).to exist
   expect(user.attributes['gidnumber'].to_s).to_not eq(uid.to_s)
 end

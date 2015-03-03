@@ -1,19 +1,12 @@
 require 'treequel/model/objectclass'
 require 'patches/treequel'
 
-module Conjur::Ldap::Directory
-  module PosixAccount
-    extend Treequel::Model::ObjectClass
+class Conjur::Ldap::Directory
 
-    model_class Treequel::Model
-    model_objectclasses :posixAccount
-  end
-
-  module PosixGroup
-    extend Treequel::Model::ObjectClass
-
-    model_class Treequel::Model
-    model_objectclasses :posixGroup
+  def initialize base_dn, bind_dn, bind_password
+    @base_dn = base_dn
+    @bind_dn = bind_dn
+    @bind_password = bind_password
   end
 
   Group = Struct.new(:name, :gid) do
@@ -34,6 +27,7 @@ module Conjur::Ldap::Directory
 
     groups_by_gid = {}
     users = []
+
     PosixGroup.each do |g|
       cn = g.cn.first
       gid = g.gidNumber
