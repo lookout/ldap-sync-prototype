@@ -56,17 +56,16 @@ task :environment do
   if ENV['CONJUR_TEST_ENVIRONMENT'] == 'acceptance'
     ENV['CONJUR_APPLIANCE_URL'] = "https://#{ENV['CONJUR_APPLIANCE_HOSTNAME']}/api"
     ENV['CONJUR_USERNAME'] = 'admin'
+    raise "Missing $CONJUR_ADMIN_PASSWORD_FILE" unless ENV['CONJUR_ADMIN_PASSWORD_FILE']
     ENV['CONJUR_API_KEY']  = File.read(ENV['CONJUR_ADMIN_PASSWORD_FILE']).chomp
     ENV['CONJUR_ACCOUNT'] ||= 'ci'
   end
 end
-
-task :features => [:environment] do
-  cucumber_opts = ENV['CONJUR_TEST_ENVIRONMENT'] == 'acceptance' ?
-      " --format html -o #{CUKE_RESULTS} --no-source -x" : ""
-  
-  `cd #{PROJECT_PATH} && cucumber #{cucumber_opts}`
+Cucumber::Rake::Task.new(:features => [:environment]) do |t|
+  t.cucumber_opts = ENV['CONJUR_TEST_ENVIRONMENT'] == 'acceptance' ?
+      " --format html -o #{CUKE_RESULTS} --no-source -x" : " --format pretty"
 end
+
 
 task :test => [:spec, :features]
 
