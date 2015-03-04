@@ -61,7 +61,7 @@ conjur: $(TESTDIR) check
 			$(AMI_OPTS)		           \
 			-k $(AWS_KEY_NAME)		   \
 			-o $(CONJUR_ACCOUNT)	           \
-			-p "$(CONJUR_ADMIN_PASSWORD)"      \
+			-p $(CONJUR_ADMIN_PASSWORD)      \
             	$(CONJUR_STACK_NAME)                       \
 			| tee  $(TESTDIR)/conjur.stack
 	[ -f $(TESTDIR)/conjur.stack ] || exit 1 
@@ -110,6 +110,10 @@ acceptance: prep
 		-e CONJUR_ADMIN_PASSWORD_FILE=/tmp/conjur-admin-password	        \
 		-v $(abspath $(TESTDIR)/conjur.password):/tmp/conjur-admin-password	\
 		$(IMAGE_NAME)
+
+
+    # need some sleep so CIDFILE exists
+	sleep 2
 	docker cp $(shell cat $(CIDFILE)):/opt/ldap-sync/features/report/ $(TESTDIR)/
 	docker logs $(shell cat $(CIDFILE)) > $(TESTDIR)/docker.logs
 	docker rm $(shell cat $(CIDFILE))
