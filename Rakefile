@@ -58,14 +58,14 @@ task :environment do
     ENV['CONJUR_USERNAME'] = 'admin'
     ENV['CONJUR_API_KEY']  = File.read(ENV['CONJUR_ADMIN_PASSWORD_FILE']).chomp
     ENV['CONJUR_ACCOUNT'] ||= 'ci'
-    $stderr.puts ENV.inspect
-  else
-    $stderr.puts "WRONG CONJUR_TEST_ENVIRONMENT: #{ENV['CONJUR_TEST_ENVIRONMENT']}"
   end
 end
 
 task :features => [:environment] do
-  `cd #{PROJECT_PATH} && cucumber --format html -o #{CUKE_RESULTS} --format pretty --no-source -x`
+  cucumber_opts = ENV['CONJUR_TEST_ENVIRONMENT'] == 'acceptance' ?
+      " --format html -o #{CUKE_RESULTS} --no-source -x" : ""
+  
+  `cd #{PROJECT_PATH} && cucumber #{cucumber_opts}`
 end
 
 task :test => [:spec, :features]
