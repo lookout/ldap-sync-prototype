@@ -62,6 +62,21 @@ Running conjur-ldap-sync again will change the Conjur representation of the LDAP
 to reflect any changes made since the last run. Because it's not possible to remove entities in Conjur,
 deletion will cause any and all role grants on the corresponding entity to be revoked.
 
+## Running the Tests
+
+The tests expect the following variables to be defined in the environment:
+
+ * `CONJUR_APPLIANCE_URL`: Url of the appliance used by the features, e.g. `https://conjur.mycompany.com/api`
+ * `CONJUR_USERNAME`: The username to use when setting up test roles.
+ * `CONJUR_API_KEY`:  The api key or password for the user.
+ * `CONJUR_ACCOUNT`: Your Conjur account.
+
+To run the tests, run this in the project directory:
+
+```
+$ rake test
+```
+
 ## Contributing
 
 1. Fork it ( http://github.com/<my-github-username>/conjur-ldap-sync/fork )
