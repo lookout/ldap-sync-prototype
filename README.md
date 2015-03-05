@@ -66,7 +66,7 @@ Conjur.
 
 ## Reports
 
-In addition to logging various information to the `stderr` (configurable with the `--log-level` option), `conjur-ldap-sync` produces a parseable JSON report, which is prented to the `stdout`.  The process won't immediately fail if a sync step causes an error, but the corresponding item in the report will be marked as failing.
+In addition to logging various information to the `stderr` (configurable with the `--log-level` option), `conjur-ldap-sync` produces a parseable JSON report, which is printed to the `stdout`.  The process won't immediately fail if a sync step causes an error, but the corresponding item in the report will be marked as failing.  Each item in the report has an `"action"` field, describing the action, the subjects of the action, and whether the action was performed successfully.
 
 
 
