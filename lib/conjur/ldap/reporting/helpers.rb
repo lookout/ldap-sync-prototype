@@ -2,12 +2,12 @@ module Conjur::Ldap::Reporting
   module Helpers
     def self.helper_method tag, *arg_keys
       method_name = :"report_#{tag}"
-      make_exras = ->(*args) {
+      make_extras = ->(*args) {
         args.zip(arg_keys).inject({}){|h, p|  h[p[1]] = p[0]; h}
       }
 
       define_method method_name do |*args, &block|
-        extras = make_exras[*args]
+        extras = make_extras[*args]
         report tag, extras, &block
       end
     end
