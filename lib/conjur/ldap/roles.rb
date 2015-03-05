@@ -44,7 +44,7 @@ module Conjur::Ldap::Roles
 
   def prefix; options[:prefix] end
   def owner; options[:owner] end
-  def save_passwords?; options[:save_api_keys] end
+  def save_api_keys?; options[:save_api_keys] end
   def ignore_ldap_ids?; options[:ignore_ldap_ids] end
 
   private
@@ -85,7 +85,7 @@ module Conjur::Ldap::Roles
       opts = {ownerid: owner.roleid}
       opts = opts.merge(uidnumber: uid) unless ignore_ldap_ids?
       user = report_create_user(username, uid){ create_user username, opts}
-      if user and save_passwords?
+      if user and save_api_keys?
         variable = user_password_variable(user)
         report_save_api_key(username,variable.id){ variable.add_value user.api_key }
       end
