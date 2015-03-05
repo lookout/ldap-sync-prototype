@@ -64,6 +64,12 @@ The `--save-api-keys` is off by default, but recommended if you want to allow cr
 Conjur.
 
 
+## Reports
+
+In addition to logging various information to the `stderr` (configurable with the `--log-level` option), `conjur-ldap-sync` produces a parseable JSON report, which is prented to the `stdout`.  The process won't immediately fail if a sync step causes an error, but the corresponding item in the report will be marked as failing.
+
+
+
 ## Running the Tests
 
 The tests expect the following variables to be defined in the environment:
