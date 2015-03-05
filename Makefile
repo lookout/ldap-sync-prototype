@@ -28,6 +28,8 @@ HOSTFILE=$(TESTDIR)/conjur.host
 STACKFILE=$(TESTDIR)/conjur.stackname
 EXITCODEFILE:=$(TESTDIR)/acceptance.exit.code
 
+all: build conjur acceptance conjur/drop
+
 build: 
 	docker build -t $(IMAGE_ID) .
 	docker tag -f $(IMAGE_ID) $(IMAGE_NAME):latest
