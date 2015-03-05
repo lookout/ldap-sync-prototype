@@ -26,6 +26,7 @@ endif
 CIDFILE=$(TESTDIR)/acceptance.cid
 HOSTFILE=$(TESTDIR)/conjur.host
 STACKFILE=$(TESTDIR)/conjur.stackname
+EXITCODEFILE:=$(TESTDIR)/acceptance.exit.code
 
 build: 
 	docker build -t $(IMAGE_ID) .
@@ -104,12 +105,16 @@ $(CIDFILE): prep
 		-e CONJUR_APPLIANCE_HOSTNAME="$(shell cat $(TESTDIR)/conjur.host)"	\
 		-e CONJUR_ADMIN_PASSWORD_FILE=/tmp/conjur-admin-password	        \
 		-v $(abspath $(TESTDIR)/conjur.password):/tmp/conjur-admin-password	\
-		$(IMAGE_NAME)
+		$(IMAGE_NAME)                                                       \
+			; echo $$? >> $(EXITCODEFILE)
+	if [ ! -f $(CIDFILE) ]; then exit 1 ; fi
 
 acceptance: $(CIDFILE)
 	docker cp $(shell cat $(CIDFILE)):/opt/ldap-sync/features/report/ $(TESTDIR)/
 	docker logs $(shell cat $(CIDFILE)) > $(TESTDIR)/docker.logs
 	docker rm $(shell cat $(CIDFILE))
 	rm -f $(CIDFILE)
+	echo "Exit with original acceptance exit code $(shell cat $(EXITCODEFILE))"
+	exit $(shell cat $(EXITCODEFILE))
 	
 
