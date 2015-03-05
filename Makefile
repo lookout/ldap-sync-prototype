@@ -1,4 +1,4 @@
-.PHONY: build pull push clean check conjur conjur/drop acceptance
+.PHONY: build pull push clean check conjur conjur/drop cleanup acceptance
 
 CONJUR_DOCKER_REGISTRY ?= registry.tld:80
 IMAGE_NAME := conjurinc/ldap-sync
@@ -29,7 +29,7 @@ STACKFILE:=$(TESTDIR)/conjur.stackname
 PASSWORDFILE=$(TESTDIR)/conjur.password
 EXITCODEFILE:=$(TESTDIR)/acceptance.exit.code
 
-all: clean pull build conjur acceptance conjur/drop
+all: clean pull build conjur acceptance cleanup
 
 build: 
 	docker build -t $(IMAGE_ID) .
@@ -122,4 +122,5 @@ acceptance: $(CIDFILE)
 	echo "Exit with original acceptance exit code $(shell cat $(EXITCODEFILE))"
 	exit $(shell cat $(EXITCODEFILE))
 	
-
+cleanup: conjur/drop
+	rm -f $(PASSWORDFILE)
