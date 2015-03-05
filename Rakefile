@@ -35,6 +35,7 @@ end
 
 require 'cucumber'
 require 'cucumber/rake/task'
+require 'ci/reporter/rake/rspec'
 gem 'rdoc' # we need the installed RDoc gem, not the system one
 require 'rdoc/task'
 
@@ -48,8 +49,6 @@ RSpec::Core::RakeTask.new
 
 PROJECT_PATH=File.dirname(__FILE__)
 $stderr.puts "DEBUG PROJECT_PATH is #{PROJECT_PATH}"
-CUKE_RESULTS = 'results.html'
-CLEAN << CUKE_RESULTS
 
 desc "Move some environment variables around for the cukes"
 task :environment do
@@ -63,10 +62,10 @@ task :environment do
 end
 Cucumber::Rake::Task.new(:features => [:environment]) do |t|
   t.cucumber_opts = ENV['CONJUR_TEST_ENVIRONMENT'] == 'acceptance' ?
-      " --format html -o #{CUKE_RESULTS} --no-source -x" : " --format pretty"
+      " --format junit --out features/report" : " --format pretty"
 end
 
 
-task :test => [:spec, :features]
+task :test => ['ci:setup:rspec', :spec, :features]
 
 
