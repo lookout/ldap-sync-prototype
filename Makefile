@@ -4,11 +4,15 @@ CONJUR_DOCKER_REGISTRY ?= registry.tld:80
 IMAGE_NAME := conjurinc/ldap-sync
 CONJUR_PLATFORM ?= 4.4
 
-BUILD_NUMBER ?= $(USER)$(shell date +%s)
+STUB_BUILD_NUMBER := $(USER)$(shell date +%s)
+BUILD_NUMBER ?= $(STUB_BUILD_NUMBER)
 IMAGE_ID=$(IMAGE_NAME):$(BUILD_NUMBER)
 
 CONJUR_HA=$(CONJUR_DOCKER_REGISTRY)/conjurinc/conjur-ha:$(CONJUR_PLATFORM)
-CONJUR_ADMIN_PASSWORD ?= $(shell uuid | cut -f1 -d '-')
+
+# non-deterministic dynamic evaluation should happen only with fixed variables (defined as := )
+STUB_ADMIN_PASSWORD:=$(shell uuid | cut -f1 -d '-')
+CONJUR_ADMIN_PASSWORD ?= $(STUB_ADMIN_PASSWORD)
 
 CONJUR_ACCOUNT ?= conjur
 TESTDIR=test
@@ -101,7 +105,7 @@ endif
 
 prep: $(TESTDIR)/conjur.password $(TESTDIR)/conjur.host check
 
-acceptance: prep
+$(CIDFILE): prep
 	docker run --cidfile $(CIDFILE)					                        \
 		-t                  						                        \
 		-e CONJUR_ACCOUNT="$(CONJUR_ACCOUNT)"                               \
@@ -111,9 +115,7 @@ acceptance: prep
 		-v $(abspath $(TESTDIR)/conjur.password):/tmp/conjur-admin-password	\
 		$(IMAGE_NAME)
 
-
-    # need some sleep so CIDFILE exists
-	sleep 2
+acceptance: $(CIDFILE)
 	docker cp $(shell cat $(CIDFILE)):/opt/ldap-sync/features/report/ $(TESTDIR)/
 	docker logs $(shell cat $(CIDFILE)) > $(TESTDIR)/docker.logs
 	docker rm $(shell cat $(CIDFILE))
