@@ -1,0 +1,6 @@
+--- 
+aws_key_name:   jenkins-ami-builder
+aws_key_file:   !tmp build-0.1.0/ec2/ami-build/private_key
+aws_access_key: !var build-0.1.0/ec2/ha-acceptance/identity/access_key
+aws_secret_key: !var build-0.1.0/ec2/ha-acceptance/identity/secret_key
+conjur_admin_password: !var build-0.1.0/conjur-ci/admin-password
