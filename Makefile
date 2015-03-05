@@ -23,9 +23,10 @@ ifdef AMI_ID
 AMI_OPTS := --imageid $(AMI_ID)
 endif
 
-CIDFILE=$(TESTDIR)/acceptance.cid
-HOSTFILE=$(TESTDIR)/conjur.host
-STACKFILE=$(TESTDIR)/conjur.stackname
+CIDFILE:=$(TESTDIR)/acceptance.cid
+HOSTFILE:=$(TESTDIR)/conjur.host
+STACKFILE:=$(TESTDIR)/conjur.stackname
+PASSWORDFILE=$(TESTDIR)/conjur.password
 EXITCODEFILE:=$(TESTDIR)/acceptance.exit.code
 
 all: clean pull build conjur acceptance conjur/drop
@@ -69,11 +70,12 @@ conjur: $(TESTDIR) check
             	$(CONJUR_STACK_NAME)                       \
 			| tee  $(TESTDIR)/conjur.stack
 	[ -f $(TESTDIR)/conjur.stack ] || exit 1 
-	grep -P 'Public(Ip|DnsName)' $(TESTDIR)/conjur.stack  | cut -f2 | grep '[^[:space:]]' | head -n 1 > $(TESTDIR)/conjur.host
-	echo "$(CONJUR_STACK_NAME)" > $(TESTDIR)/conjur.stackname
-	echo "$(CONJUR_ADMIN_PASSWORD)" > $(TESTDIR)/conjur.password
+	grep -P 'Public(Ip|DnsName)' $(TESTDIR)/conjur.stack  | cut -f2 | grep '[^[:space:]]' | head -n 1 > $(HOSTFILE) 
+	[ -s $(HOSTFILE) ] || exit 1 
+	echo "$(CONJUR_STACK_NAME)" > $(STACKFILE)
+	echo "$(CONJUR_ADMIN_PASSWORD)" > $(PASSWORDFILE)
 
-conjur/drop: $(TESTDIR)/conjur.stackname
+conjur/drop: $(STACKFILE)
 ifdef KEEP_INSTANCES
 	$(error "KEEP_INSTANCES variable is set, refusing to delete stack $(CONJUR_STACK_NAME)")
 endif
@@ -81,32 +83,32 @@ endif
 		-e AWS_ACCESS_KEY	    \
 		-e AWS_SECRET_KEY	    \
 		$(CONJUR_HA) stack delete   \
-		$(shell cat $(TESTDIR)/conjur.stackname)
+		$(shell cat $(STACKFILE) )
 
-$(TESTDIR)/conjur.host: $(TESTDIR)
+$(HOSTFILE): $(TESTDIR)
 ifdef CONJUR_APPLIANCE_HOSTNAME
-	if [ ! -f $(TESTDIR)/conjur.host] ; then echo "$(CONJUR_APPLIANCE_HOSTNAME)" > $(TESTDIR)/conjur.host ; fi
+	if [ ! -f $(HOSTFILE) ] ; then echo "$(CONJUR_APPLIANCE_HOSTNAME)" > $(HOSTFILE) ; fi
 else
-	if [ ! -f $(TESTDIR)/conjur.host] ; then echo "Try to run 'make conjur'"; exit 1; fi
+	if [ ! -f $(HOSTFILE) ] ; then echo "Try to run 'make conjur'"; exit 1; fi
 endif
 
-$(TESTDIR)/conjur.password: $(TESTDIR)
+$(PASSWORDFILE): $(TESTDIR)
 ifdef CONJUR_ADMIN_PASSWORD
 	if [ ! -f $(TESTDIR)/conjur.password] ; then echo "$(CONJUR_ADMIN_PASSWORD)" > $(TESTDIR)/conjur.password ; fi
 else
 	if [ ! -f $(TESTDIR)/conjur.password] ; then echo "Try to run 'make conjur'"; exit 1; fi
 endif
 
-prep: $(TESTDIR)/conjur.password $(TESTDIR)/conjur.host check
+prep: $(PASSWORDFILE) $(HOSTFILE) check
 
 $(CIDFILE): prep
 	docker run --cidfile $(CIDFILE)					                        \
 		-t                  						                        \
 		-e CONJUR_ACCOUNT="$(CONJUR_ACCOUNT)"                               \
 		-e CONJUR_TEST_ENVIRONMENT=acceptance                               \
-		-e CONJUR_APPLIANCE_HOSTNAME="$(shell cat $(TESTDIR)/conjur.host)"	\
+		-e CONJUR_APPLIANCE_HOSTNAME="$(shell cat $(HOSTFILE) )"			\
 		-e CONJUR_ADMIN_PASSWORD_FILE=/tmp/conjur-admin-password	        \
-		-v $(abspath $(TESTDIR)/conjur.password):/tmp/conjur-admin-password	\
+		-v $(abspath $(PASSWORDFILE)):/tmp/conjur-admin-password	\
 		$(IMAGE_NAME)                                                       \
 			; echo $$? >> $(EXITCODEFILE)
 	if [ ! -f $(CIDFILE) ]; then exit 1 ; fi
