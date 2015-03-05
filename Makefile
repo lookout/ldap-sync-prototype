@@ -27,10 +27,7 @@ CIDFILE=$(TESTDIR)/acceptance.cid
 HOSTFILE=$(TESTDIR)/conjur.host
 STACKFILE=$(TESTDIR)/conjur.stackname
 
-docker_known_hosts:
-	ssh-keyscan -t rsa github.com > docker_known_hosts
-
-build: docker_known_hosts
+build: 
 	docker build -t $(IMAGE_ID) .
 	docker tag -f $(IMAGE_ID) $(IMAGE_NAME):latest
 	docker tag -f $(IMAGE_ID) $(CONJUR_DOCKER_REGISTRY)/$(IMAGE_ID) 
@@ -82,12 +79,6 @@ endif
 		-e AWS_SECRET_KEY	    \
 		$(CONJUR_HA) stack delete   \
 		$(shell cat $(TESTDIR)/conjur.stackname)
-
-mycheck:
-	if [ ! -f $(TESTDIR)/conjur.host2 ]; then echo "Hostfile bad"; exit 1; fi 
-	[ -f $(TESTDIR)/conjur.password ] && echo "Password OK"
-	[ -f $(TESTDIR)/conjur.host ] && [ -f $(TESTDIR)/conjur.password ] 
-
 
 $(TESTDIR)/conjur.host: $(TESTDIR)
 ifdef CONJUR_APPLIANCE_HOSTNAME
