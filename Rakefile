@@ -62,7 +62,7 @@ task :environment do
 end
 Cucumber::Rake::Task.new(:features => [:environment]) do |t|
   t.cucumber_opts = ENV['CONJUR_TEST_ENVIRONMENT'] == 'acceptance' ?
-      " --format junit --out features/report" : " --format pretty"
+      " -x --format junit --out features/report" : " --format pretty"
 end
 
 
