@@ -87,14 +87,14 @@ $(TESTDIR)/conjur.host: $(TESTDIR)
 ifdef CONJUR_APPLIANCE_HOSTNAME
 	if [ ! -f $(TESTDIR)/conjur.host] ; then echo "$(CONJUR_APPLIANCE_HOSTNAME)" > $(TESTDIR)/conjur.host ; fi
 else
-	if [ ! -f $(TESTDIR)/conjur.host] ; then echo "Try to run `make conjur`"; exit 1; fi
+	if [ ! -f $(TESTDIR)/conjur.host] ; then echo "Try to run 'make conjur'"; exit 1; fi
 endif
 
 $(TESTDIR)/conjur.password: $(TESTDIR)
 ifdef CONJUR_ADMIN_PASSWORD
 	if [ ! -f $(TESTDIR)/conjur.password] ; then echo "$(CONJUR_ADMIN_PASSWORD)" > $(TESTDIR)/conjur.password ; fi
 else
-	if [ ! -f $(TESTDIR)/conjur.password] ; then echo "Try to run `make conjur`"; exit 1; fi
+	if [ ! -f $(TESTDIR)/conjur.password] ; then echo "Try to run 'make conjur'"; exit 1; fi
 endif
 
 prep: $(TESTDIR)/conjur.password $(TESTDIR)/conjur.host check
