@@ -75,5 +75,5 @@ World ConjurHelpers
 
 Before do
   init_testrole
-  @aruba_timeout_seconds = 30 # It can take this long on a bad connection to the appliance.
+  @aruba_timeout_seconds = 600 # 10 minutes
 end
