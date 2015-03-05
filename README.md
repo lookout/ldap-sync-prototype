@@ -32,6 +32,10 @@ For other options (such as using environment variables directly), please consult
 
 ### Conjur
 
+The `conjur-ldap-sync` program must be run with a Conjur identity that can create
+and modify roles.  This identity will typically be a user, but could also be 
+a host.  We'll refer to this user as the **service**.
+
 To allow conjur-ldap-sync to connect to Conjur, make sure `CONJUR_USERNAME`
 and `CONJUR_API_KEY` environment variables correspond to a pre-created role
 dedicated for this purpose.  You must also set the `CONJUR_APPLIANCE_URL` and
@@ -44,7 +48,9 @@ conjur-ldap-sync replicates user and group structure from an upstream LDAP serve
 
 It maps posixAccount and posixGroup objects (as defined by RFC 2307) respectively to Conjur
 users and groups, with group roles granted to appropriate users.  All created roles are granted
-to either the 
+to either the service role or the role specficied by the `--owner OWNER` option.
+
+Note that if the owner role is specified, the service role must be a member of the owner role.
 
 The `conjur-ldap-sync` command accepts the following options:
 
