@@ -8,7 +8,7 @@ STUB_BUILD_NUMBER := $(USER)$(shell date +%s)
 BUILD_NUMBER ?= $(STUB_BUILD_NUMBER)
 IMAGE_ID=$(IMAGE_NAME):$(BUILD_NUMBER)
 
-CONJUR_HA=$(CONJUR_DOCKER_REGISTRY)/conjurinc/conjur-ha:$(CONJUR_PLATFORM)
+CONJUR_HA=conjurinc/conjur-ha:$(CONJUR_PLATFORM)
 
 # non-deterministic dynamic evaluation should happen only with fixed variables (defined as := )
 STUB_ADMIN_PASSWORD:=$(shell uuid | cut -f1 -d '-')
@@ -28,7 +28,7 @@ HOSTFILE=$(TESTDIR)/conjur.host
 STACKFILE=$(TESTDIR)/conjur.stackname
 EXITCODEFILE:=$(TESTDIR)/acceptance.exit.code
 
-all: build conjur acceptance conjur/drop
+all: clean pull build conjur acceptance conjur/drop
 
 build: 
 	docker build -t $(IMAGE_ID) .
@@ -37,8 +37,8 @@ build:
 	docker tag -f $(IMAGE_NAME):latest $(CONJUR_DOCKER_REGISTRY)/$(IMAGE_NAME):latest 
 
 pull:
-	docker pull $(CONJUR_DOCKER_REGISTRY)/$(IMAGE_NAME):latest
-	docker tag -f $(CONJUR_DOCKER_REGISTRY)/$(IMAGE_NAME):latest $(IMAGE_NAME):latest
+	docker pull $(CONJUR_DOCKER_REGISTRY)/$(CONJUR_HA)
+	docker tag -f $(CONJUR_DOCKER_REGISTRY)/$(CONJUR_HA) $(CONJUR_HA)
 
 push:
 	docker push $(CONJUR_DOCKER_REGISTRY)/$(IMAGE_NAME)
@@ -112,7 +112,8 @@ $(CIDFILE): prep
 	if [ ! -f $(CIDFILE) ]; then exit 1 ; fi
 
 acceptance: $(CIDFILE)
-	docker cp $(shell cat $(CIDFILE)):/opt/ldap-sync/features/report/ $(TESTDIR)/
+	docker cp $(shell cat $(CIDFILE)):/opt/ldap-sync/features/report/ $(TESTDIR)/cukes_report
+	docker cp $(shell cat $(CIDFILE)):/opt/ldap-sync/spec/reports/ $(TESTDIR)/spec_report
 	docker logs $(shell cat $(CIDFILE)) > $(TESTDIR)/docker.logs
 	docker rm $(shell cat $(CIDFILE))
 	rm -f $(CIDFILE)
