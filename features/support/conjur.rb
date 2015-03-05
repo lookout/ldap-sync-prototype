@@ -19,7 +19,7 @@ module ConjurHelpers
   end
 
   def conjur_account
-    ENV['CONJUR_ACCOUNT']
+    Conjur.configuration.account
   end
 
   def roles_by_name
