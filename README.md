@@ -18,7 +18,7 @@ Makefile contains several targets responsible for the build of base docker image
 
 Below is the description of related targets
 
-* build/clean -- deletes build directory (which is `./docker`)
+* build/clean -- deletes build directory (which is `./build`)
 * build/base  -- builds base image
 * build/test  -- builds additional image with tests
 * build/push -- if CONJUR\_DOCKER\_REGISTRY is defined, pushes both types of images to it

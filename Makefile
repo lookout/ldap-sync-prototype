@@ -16,7 +16,7 @@ CONJUR_PLATFORM ?= 4.4
 CONJUR_HA=conjurinc/conjur-ha:$(CONJUR_PLATFORM)
 
 ##### Build parameters
-BUILDDIR:=docker
+BUILDDIR:=build
 BASE_DOCKER_CONTEXT :=$(BUILDDIR)/context/base
 TEST_DOCKER_CONTEXT :=$(BUILDDIR)/context/test
 BASE_TAG :=$(BASE_IMAGE_NAME):build_$(BUILD_NUMBER)
@@ -57,7 +57,7 @@ $(BUILDDIR):
 build/clean:
 	rm -rf $(BUILDDIR)
 
-$(BUILDDIR)/base: $(BASE_DEPS) $(BUILDDIR)
+build/base: $(BASE_DEPS) $(BUILDDIR)
 	rm -rf $(BASE_DOCKER_CONTEXT)
 	mkdir -pv $(BASE_DOCKER_CONTEXT)
 	cp -r --preserve=all $(BASE_SOURCES) Dockerfile $(BASE_DOCKER_CONTEXT)
@@ -72,7 +72,7 @@ ifdef CONJUR_DOCKER_REGISTRY
 	docker tag -f $(BASE_TAG) $(CONJUR_DOCKER_REGISTRY)/$(BASE_IMAGE_NAME):latest
 endif
 
-$(BUILDDIR)/test: build/base $(TEST_DEPS) $(BUILDDIR)
+build/test: build/base $(TEST_DEPS) $(BUILDDIR)
 	rm -rf $(TEST_DOCKER_CONTEXT)
 	mkdir -pv $(TEST_DOCKER_CONTEXT)
 	cp -r --preserve=all $(TEST_SOURCES) $(TEST_DOCKER_CONTEXT)
