@@ -25,7 +25,8 @@ module Conjur
       # @option opts [Boolean] :save_passwords (false) whether to save credentials for users created
       #   in variables.
       def run_sync opts
-        conjur.sync_to directory.posix_groups, opts
+
+        conjur.sync_to directory(opts).posix_groups, opts
       rescue => e
         case e 
           when RestClient::Exception
@@ -39,9 +40,12 @@ module Conjur
         reporter.dump
       end
 
-      def directory
+      def directory opts={}
         unless @directory
           @directory = Treequel.directory_from_config
+          if opts[:bind_dn] and opts[:bind_password]
+            @directory.bind_as opts[:bind_dn], opts[:bind_password]
+          end
           @directory.extend Directory
         end
         @directory

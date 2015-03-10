@@ -11,7 +11,8 @@ class App
   include Methadone::CLILogging
 
   main do
-    Conjur::Ldap::Sync.run_sync options
+    puts options
+    #Conjur::Ldap::Sync.run_sync options
   end
 
   version Conjur::Ldap::Sync::VERSION
@@ -25,6 +26,10 @@ class App
   on '--owner OWNER', 'Role that will own all groups, users, and variables created'
 
   on('--save-api-keys', 'When present, passwords will be saved to variables'){ options[:save_api_keys] = true}
+
+  on('--bind-dn DN', 'Bind DN for the LDAP server'){|val| options[:bind_dn] = val}
+
+  on('--bind-password PASS','Bind password for the LDAP server'){|val| options[:bind_password] = val}
 
   #on('--no-ldap-ids', "Don't import LDAP uids and gids"){ options[:ignore_ldap_ids] = true }
 
