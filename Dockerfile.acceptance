@@ -9,5 +9,6 @@ RUN apt-get update && apt-get install -y openjdk-7-jre
 
 ADD Rakefile /opt/ldap-sync/Rakefile
 ADD features /opt/ldap-sync/features
+ADD spec     /opt/ldap-sync/spec
 
 ENTRYPOINT ["bundle", "exec", "rake","--trace", "test"]

@@ -25,8 +25,8 @@ TEST_TAG :=$(TEST_IMAGE_NAME):build_$(BUILD_NUMBER)
 BASE_SOURCES:=bin lib Gemfile* *.gemspec
 BASE_DEPS:=$(BASE_SOURCES) $(shell find bin/) $(shell find lib/) Dockerfile
 
-TEST_SOURCES=features Rakefile
-TEST_DEPS:=$(TEST_SOURCES) $(shell find features/) Dockerfile.acceptance
+TEST_SOURCES=features spec Rakefile
+TEST_DEPS:=$(TEST_SOURCES) $(shell find features/) $(shell find spec/) Dockerfile.acceptance
 
 ##### Acceptance parameters
 # non-deterministic dynamic evaluation should happen only with fixed variables (defined as := )
