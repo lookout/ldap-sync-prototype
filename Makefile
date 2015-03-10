@@ -1,24 +1,26 @@
 .PHONY: build pull push clean check conjur conjur/drop cleanup acceptance
 
-CONJUR_DOCKER_REGISTRY ?= registry.tld:80
+#CONJUR_DOCKER_REGISTRY ?= registry.tld:80
 IMAGE_NAME := conjurinc/ldap-sync
 CONJUR_PLATFORM ?= 4.4
 
 STUB_BUILD_NUMBER := $(USER)$(shell date +%s)
 BUILD_NUMBER ?= $(STUB_BUILD_NUMBER)
-IMAGE_ID=$(IMAGE_NAME):$(BUILD_NUMBER)
 
+#### Acceptance setup 
+ACCEPTANCE_IMAGE_ID=$(IMAGE_NAME):$(BUILD_NUMBER)
+
+# supplementary image, to launch Conjur servers for testing purposes
 CONJUR_HA=conjurinc/conjur-ha:$(CONJUR_PLATFORM)
 
 # non-deterministic dynamic evaluation should happen only with fixed variables (defined as := )
-STUB_ADMIN_PASSWORD:=$(shell uuid | cut -f1 -d '-')
+RANDOM_PASSWORD:=$(openssl rand -hex 8)
 CONJUR_ADMIN_PASSWORD ?= $(STUB_ADMIN_PASSWORD)
 
 CONJUR_ACCOUNT ?= conjur
 TESTDIR=test
 
-
-CONJUR_STACK_NAME=a-conjur-ldap-sync-$(BUILD_NUMBER)
+CONJUR_STACK_NAME=acceptance-ldap-sync-$(BUILD_NUMBER)
 ifdef AMI_ID
 AMI_OPTS := --imageid $(AMI_ID)
 endif
@@ -32,9 +34,9 @@ EXITCODEFILE:=$(TESTDIR)/acceptance.exit.code
 all: clean pull build conjur acceptance cleanup
 
 build: 
-	docker build -t $(IMAGE_ID) .
-	docker tag -f $(IMAGE_ID) $(IMAGE_NAME):latest
-	docker tag -f $(IMAGE_ID) $(CONJUR_DOCKER_REGISTRY)/$(IMAGE_ID) 
+	docker build -t $(ACCEPTANCE_IMAGE_ID) .
+	docker tag -f $(ACCEPTANCE_IMAGE_ID) $(IMAGE_NAME):latest
+	docker tag -f $(ACCEPTANCE_IMAGE_ID) $(CONJUR_DOCKER_REGISTRY)/$(IMAGE_ID) 
 	docker tag -f $(IMAGE_NAME):latest $(CONJUR_DOCKER_REGISTRY)/$(IMAGE_NAME):latest 
 
 pull:
