@@ -51,10 +51,13 @@ EXITCODEFILE:=$(TESTDIR)/acceptance.exit.code
 
 ########## BUILD
 
+$(BUILDDIR):
+	mkdir -pv $(BUILDDIR)
+
 build/clean:
 	rm -rf $(BUILDDIR)
 
-build/base: $(BASE_DEPS)
+build/base: $(BASE_DEPS) $(BUILDDIR)
 	rm -rf $(BASE_DOCKER_CONTEXT)
 	mkdir -pv $(BASE_DOCKER_CONTEXT)
 	cp -r --preserve=all $(BASE_SOURCES) Dockerfile $(BASE_DOCKER_CONTEXT)
@@ -69,7 +72,7 @@ ifdef CONJUR_DOCKER_REGISTRY
 	docker tag -f $(BASE_TAG) $(CONJUR_DOCKER_REGISTRY)/$(BASE_IMAGE_NAME):latest
 endif
 
-build/test: build/base $(TEST_DEPS)
+build/test: build/base $(TEST_DEPS) $(BUILDDIR)
 	rm -rf $(TEST_DOCKER_CONTEXT)
 	mkdir -pv $(TEST_DOCKER_CONTEXT)
 	cp -r --preserve=all $(TEST_SOURCES) $(TEST_DOCKER_CONTEXT)
