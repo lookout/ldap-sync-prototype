@@ -57,7 +57,7 @@ $(BUILDDIR):
 build/clean:
 	rm -rf $(BUILDDIR)
 
-build/base: $(BASE_DEPS) $(BUILDDIR)
+$(BUILDDIR)/base: $(BASE_DEPS) $(BUILDDIR)
 	rm -rf $(BASE_DOCKER_CONTEXT)
 	mkdir -pv $(BASE_DOCKER_CONTEXT)
 	cp -r --preserve=all $(BASE_SOURCES) Dockerfile $(BASE_DOCKER_CONTEXT)
@@ -65,14 +65,14 @@ build/base: $(BASE_DEPS) $(BUILDDIR)
 	git show | head -n 2 >> $(BASE_DOCKER_CONTEXT)/build.base.info
 	git status -s -b >> $(BASE_DOCKER_CONTEXT)/build.base.info
 	docker build --rm -t $(BASE_TAG) $(BASE_DOCKER_CONTEXT)
-	echo $(BASE_TAG) > build/base
+	echo $(BASE_TAG) > $(BUILDDIR)/base
 	docker tag -f $(BASE_TAG) $(BASE_IMAGE_NAME):latest
 ifdef CONJUR_DOCKER_REGISTRY
 	docker tag -f $(BASE_TAG) $(CONJUR_DOCKER_REGISTRY)/$(BASE_TAG)
 	docker tag -f $(BASE_TAG) $(CONJUR_DOCKER_REGISTRY)/$(BASE_IMAGE_NAME):latest
 endif
 
-build/test: build/base $(TEST_DEPS) $(BUILDDIR)
+$(BUILDDIR)/test: build/base $(TEST_DEPS) $(BUILDDIR)
 	rm -rf $(TEST_DOCKER_CONTEXT)
 	mkdir -pv $(TEST_DOCKER_CONTEXT)
 	cp -r --preserve=all $(TEST_SOURCES) $(TEST_DOCKER_CONTEXT)
@@ -80,7 +80,8 @@ build/test: build/base $(TEST_DEPS) $(BUILDDIR)
 	echo "BUILD_NUMBER=$(BUILD_NUMBER)" > $(TEST_DOCKER_CONTEXT)/build.test.info
 	git show | head -n 2 >> $(TEST_DOCKER_CONTEXT)/build.test.info
 	git status -s -b >> $(TEST_DOCKER_CONTEXT)/build.test.info
-	docker build -t $(TEST_TAG) $(TEST_DOCKER_CONTEXT)
+	docker build --rm -t $(TEST_TAG) $(TEST_DOCKER_CONTEXT)
+	echo $(TEST_TAG) > $(BUILDDIR)/test
 	docker tag -f $(TEST_TAG) $(TEST_IMAGE_NAME):latest
 ifdef CONJUR_DOCKER_REGISTRY
 	docker tag -f $(TEST_TAG) $(CONJUR_DOCKER_REGISTRY)/$(TEST_TAG)
