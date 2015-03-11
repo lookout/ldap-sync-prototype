@@ -11,7 +11,7 @@ require 'pp'
 module Conjur
   module Ldap
     module Sync
-      include Methadone::CLILogging
+      include Conjur::Ldap::Logging
       include Conjur::Ldap::Reporting
       
       module_function
@@ -29,11 +29,11 @@ module Conjur
       rescue => e
         case e 
           when RestClient::Exception
-            error "LDAP sync failed: #{e}\n\t#{e.response.body}"
+            log.error "LDAP sync failed: #{e}\n\t#{e.response.body}"
           else
-            error "LDAP sync failed: #{e}"
+            log.error "LDAP sync failed: #{e}"
         end
-        error "backtrace:\n#{$@.join "\n\t"}"
+        log.error "backtrace:\n#{$@.join "\n\t"}"
         raise e
       ensure
         reporter.dump

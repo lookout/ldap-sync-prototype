@@ -11,9 +11,6 @@ class App
   include Methadone::CLILogging
 
   main do
-    if options.include?(:bind_password) != options.include?(:bind_dn)
-      exit_now! "You must specify both --bind-password and --bind-dn if either option is present. "
-    end
     Conjur::Ldap::Sync.run_sync options
   end
 
