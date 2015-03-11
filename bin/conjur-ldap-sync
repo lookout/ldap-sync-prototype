@@ -11,16 +11,21 @@ class App
   include Methadone::CLILogging
 
   main do
+    if options.include?(:bind_password) != options.include?(:bind_dn)
+      exit_now! "You must specify both --bind-password and --bind-dn if either option is present. "
+    end
     Conjur::Ldap::Sync.run_sync options
   end
 
   version Conjur::Ldap::Sync::VERSION
+  description "Synchronize Conjur with an external LDAP database"
 
   use_log_level_option
 
   options[:save_api_keys] = false
   options[:ignore_ldap_ids] = false
   options[:prefix] = ENV['CONJUR_LDAP_SYNC_PREFIX']
+  options[:bind_password] = ENV['CONJUR_LDAP_PASSWORD']
   
   on '--owner OWNER', 'Role that will own all groups, users, and variables created'
 
@@ -30,7 +35,7 @@ class App
 
   on('--bind-password PASS','Bind password for the LDAP server'){|val| options[:bind_password] = val}
 
-  #on('--no-ldap-ids', "Don't import LDAP uids and gids"){ options[:ignore_ldap_ids] = true }
+  on('--no-ldap-ids', "Don't import LDAP uids and gids"){ options[:ignore_ldap_ids] = true }
 
   go!
 end

@@ -11,7 +11,7 @@ require 'pp'
 module Conjur
   module Ldap
     module Sync
-      include Conjur::Ldap::Logging
+      include Methadone::CLILogging
       include Conjur::Ldap::Reporting
       
       module_function
@@ -29,11 +29,11 @@ module Conjur
       rescue => e
         case e 
           when RestClient::Exception
-            logger.error "LDAP sync failed: #{e}\n\t#{e.response.body}"
+            error "LDAP sync failed: #{e}\n\t#{e.response.body}"
           else
-            logger.error "LDAP sync failed: #{e}"
+            error "LDAP sync failed: #{e}"
         end
-        logger.error "backtrace:\n#{$@.join "\n\t"}"
+        error "backtrace:\n#{$@.join "\n\t"}"
         raise e
       ensure
         reporter.dump
@@ -42,9 +42,7 @@ module Conjur
       def directory opts={}
         unless @directory
           @directory = Treequel.directory_from_config
-          log.error "dir with opts: #{opts}"
           if opts[:bind_dn] and opts[:bind_password]
-            log.error "binding as #{opts[:bind_dn]}, #{opts[:bind_password]}"
             @directory.bind_as opts[:bind_dn], opts[:bind_password]
           end
           @directory.extend Directory
@@ -54,6 +52,10 @@ module Conjur
 
       def conjur
         unless @conjur
+          ENV['CONJUR_USERNAME'] = ENV['CONJUR_API_LOGIN'] if (ENV['CONJUR_API_LOGIN'] and not ENV['CONJUR_USERNAME'])
+          %w(CONJUR_USERNAME CONJUR_API_KEY).each do |key|
+            raise "Missing $#{key}" unless ENV.member?(key)
+          end
           @conjur = Conjur::API.new_from_key ENV['CONJUR_USERNAME'], ENV['CONJUR_API_KEY']
           @conjur.extend Roles
         end

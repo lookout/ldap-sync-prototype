@@ -74,6 +74,10 @@ The `conjur-ldap-sync` command accepts the following options:
 
     --owner OWNER                Role that will own all groups, users, and variables created
     --save-api-keys              When present, passwords will be saved to variables
+    --bind-dn DN                 DN to use for authenticated binds.  If present, --bind-password must also be given.
+    --bind-password PASS         Password to use for authenticated binds.  You can also use the environment variable
+                                    CONJUR_LDAP_PASSWORD to avoid placing secrets on the command line.
+
 
 The `--save-api-keys` is off by default, but recommended if you want to allow created roles to login to
 Conjur.
