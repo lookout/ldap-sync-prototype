@@ -9,12 +9,17 @@ Then(/^it should (not )?be a member of "(.*?)"$/) do |neg, role|
 end
 
 
-When %r{^I( successfully)? sync(?: with options "(.*)")?$} do |successfully, options|
-  puts "export CONJUR_LDAP_SYNC_PREFIX='#{conjur_prefix}'"
+When %r{^I(?: can)?((?: not)|(?: successfully))? sync(?: with options "(.*)")?$} do |success, options|
   set_env 'CONJUR_LDAP_SYNC_PREFIX', conjur_prefix
   command = mangle_name "conjur-ldap-sync #{options}"
-  puts "run: #{command}"
-  run_simple unescape(command), !!successfully
+  if success.strip == 'successfully'
+    run_simple unescape(command), true
+  else
+    run_simple unescape(command), false
+    if success.strip == 'not'
+      assert_success false
+    end
+  end
 end
 
 Then %r{^it should (not )?be owned by "(.*?)"$} do |neg, owner|
