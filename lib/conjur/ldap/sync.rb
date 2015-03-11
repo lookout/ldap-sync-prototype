@@ -40,28 +40,23 @@ module Conjur
       end
 
       def directory opts={}
-        unless @directory
-          @directory = Treequel.directory_from_config
+        @directory ||= Treequel.directory_from_config.extend(Directory).tap do |dir|
           if opts[:bind_dn] and opts[:bind_password]
-            @directory.bind_as opts[:bind_dn], opts[:bind_password]
+            dir.bind_as opts[:bind_dn], opts[:bind_password]
           end
-          @directory.extend Directory
         end
-        @directory
       end
 
       def conjur
-        unless @conjur
-          ENV['CONJUR_USERNAME'] = ENV['CONJUR_API_LOGIN'] if (ENV['CONJUR_API_LOGIN'] and not ENV['CONJUR_USERNAME'])
-          %w(CONJUR_USERNAME CONJUR_API_KEY).each do |key|
-            raise "Missing $#{key}" unless ENV.member?(key)
-          end
-          @conjur = Conjur::API.new_from_key ENV['CONJUR_USERNAME'], ENV['CONJUR_API_KEY']
-          @conjur.extend Roles
-        end
-        @conjur
+        @conjur ||= Conjur::API.new_from_key(*conjur_credentials).extend Roles
       end
 
+      # Fetch credentials from environment, returns a [login, password] pair
+      def conjur_credentials
+        api_key = ENV['CONJUR_API_KEY'] or raise("Missing $CONJUR_API_KEY")
+        login = ENV['CONJUR_USERNAME'] or ENV['CONJUR_AUTHN_LOGIN'] or raise("You must provide $CONJUR_USERNAME or $CONJUR_AUTHN_LOGIN")
+        [login, api_key]
+      end
     end
   end
 end
