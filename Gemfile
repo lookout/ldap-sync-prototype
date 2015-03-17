@@ -5,4 +5,5 @@ gemspec
 
 group :test, :development do
   gem 'pry'
+  gem "ci_reporter_rspec"
 end

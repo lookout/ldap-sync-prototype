@@ -39,16 +39,16 @@ Feature: Saving user credentials to Conjur variables
       """
 
   Scenario: The current role can access the api key for user 'bob'
-    When I successfully sync with options "--save-passwords"
-    Then the variable "<prefix>-bob/password" should exist
+    When I successfully sync with options "--save-api-keys"
+    Then the variable "<prefix>-bob/api-key" should exist
     And role "service:<prefix>" can execute the variable
 
   Scenario: The role specified by --owner can access the api key for 'bob'
     Given a role named "service:<prefix>-ldap-agent"
-    When I successfully sync with options "--owner service:<prefix>-ldap-agent --save-passwords"
-    Then the variable "<prefix>-bob/password" should exist
+    When I successfully sync with options "--owner service:<prefix>-ldap-agent --save-api-keys"
+    Then the variable "<prefix>-bob/api-key" should exist
     And role "service:<prefix>-ldap-agent" can execute the variable
 
-  Scenario: Passwords are not saved when the --save-passwords option is not given
+  Scenario: Passwords are not saved when the --save-api-keys option is not given
     When I successfully sync
-    Then the variable "<prefix>-bob/password" should not exist
+    Then the variable "<prefix>-bob/api-key" should not exist

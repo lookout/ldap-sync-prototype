@@ -9,12 +9,17 @@ Then(/^it should (not )?be a member of "(.*?)"$/) do |neg, role|
 end
 
 
-When %r{^I( successfully)? sync(?: with options "(.*)")?$} do |successfully, options|
-  options ||= ''
-  options << ' --prefix <prefix>' unless options.index '--prefix'
+When %r{^I(?: can)?((?: not)|(?: successfully))? sync(?: with options "(.*)")?$} do |success, options|
+  set_env 'CONJUR_LDAP_SYNC_PREFIX', conjur_prefix
   command = mangle_name "conjur-ldap-sync #{options}"
-  # puts "RUNNING #{command}"
-  step "I#{successfully ||' '} run `#{command}`"
+  if success.strip == 'successfully'
+    run_simple unescape(command), true
+  else
+    run_simple unescape(command), false
+    if success.strip == 'not'
+      assert_success false
+    end
+  end
 end
 
 Then %r{^it should (not )?be owned by "(.*?)"$} do |neg, owner|
@@ -49,9 +54,44 @@ Given %r{^a role named "(.*?)"$} do |rolename|
   roles_by_name[rolename] = find_or_create_role(rolename)
 end
 
+And %r{^I grant the service role to "(.*?)"$} do |role|
+  role = conjur.role mangle_name(role)
+  service_role.grant_to role
+end
+
 Then %r{^a user named "(.*?)" exists and has the uid for "(.*?)"} do |username, uidfor|
   uid = uids[uidfor]
   user = conjur.user(mangle_name username)
   expect(user).to exist
   expect(user.attributes['uidnumber'].to_s).to eq(uid.to_s)
+end
+
+Then %r{^a group named "(.*?)" exists and has the gid for "(.*?)"$} do |groupname, gidfor|
+  gid = gids[gidfor]
+  group = conjur.group mangle_name(groupname)
+  expect(group).to exist
+  expect(group.attributes['gidnumber'].to_s).to eq(gid.to_s)
+end
+
+Then %r{^the report should have actions:$} do |table|
+  actual_reports = JSON.parse(only_processes.last.stdout)['actions']
+  puts "report: #{actual_reports}"
+  expected_reports = expected_actions_from_table(table)
+  expect(actual_reports.length).to eq(expected_reports.length)
+  expected_reports.zip(actual_reports).each do |expected, actual|
+    match_action expected, actual
+  end
+end
+
+Then %r{^a group named "(.*?)" exists and does not have gid (\d+)} do |name, gid|
+  group = conjur.group mangle_name(name)
+  expect(group).to exist
+  expect(group.attributes['gidnumber'].to_s).to_not eq(gid.to_s)
+end
+
+
+Then %r{^a user named "(.*?)" exists and does not have uid (\d+)} do |name, uid|
+  user = conjur.user mangle_name(name)
+  expect(user).to exist
+  expect(user.attributes['gidnumber'].to_s).to_not eq(uid.to_s)
 end

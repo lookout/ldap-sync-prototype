@@ -21,15 +21,15 @@ module Conjur::Ldap::Directory
       @members ||= []
     end
   end
-  
+
   User = Struct.new(:name, :uid) do
     def groups
       @groups ||= []
     end
   end
-  
+
   Structure = Struct.new(:groups, :users)
-  
+
   def posix_groups
 
     groups_by_gid = {}
@@ -49,6 +49,7 @@ module Conjur::Ldap::Directory
         user.groups << group
       end
     end
+
     Structure.new(groups_by_gid.values, users)
   end
 end

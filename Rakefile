@@ -35,6 +35,7 @@ end
 
 require 'cucumber'
 require 'cucumber/rake/task'
+require 'ci/reporter/rake/rspec'
 gem 'rdoc' # we need the installed RDoc gem, not the system one
 require 'rdoc/task'
 
@@ -43,24 +44,28 @@ include Rake::DSL
 Bundler::GemHelper.install_tasks
 
 
-RSpec::Core::RakeTask.new do |t|
-  # Put spec opts in a file named .rspec in root
+RSpec::Core::RakeTask.new
+
+
+PROJECT_PATH=File.dirname(__FILE__)
+$stderr.puts "DEBUG PROJECT_PATH is #{PROJECT_PATH}"
+
+desc "Move some environment variables around for the cukes"
+task :environment do
+  if ENV['CONJUR_TEST_ENVIRONMENT'] == 'acceptance'
+    ENV['CONJUR_APPLIANCE_URL'] = "https://#{ENV['CONJUR_APPLIANCE_HOSTNAME']}/api"
+    ENV['CONJUR_USERNAME'] = 'admin'
+    raise "Missing $CONJUR_ADMIN_PASSWORD_FILE" unless ENV['CONJUR_ADMIN_PASSWORD_FILE']
+    ENV['CONJUR_API_KEY']  = File.read(ENV['CONJUR_ADMIN_PASSWORD_FILE']).chomp
+    ENV['CONJUR_ACCOUNT'] ||= 'ci'
+  end
+end
+Cucumber::Rake::Task.new(:features => [:environment]) do |t|
+  t.cucumber_opts = ENV['CONJUR_TEST_ENVIRONMENT'] == 'acceptance' ?
+      " -x --format junit --out features/report" : " --format pretty"
 end
 
 
-CUKE_RESULTS = 'results.html'
-CLEAN << CUKE_RESULTS
-Cucumber::Rake::Task.new(:features) do |t|
-  t.cucumber_opts = "features --format html -o #{CUKE_RESULTS} --format pretty --no-source -x"
-  t.fork = false
-end
+task :test => ['ci:setup:rspec', :spec, :features]
 
-Rake::RDocTask.new do |rd|
-  
-  rd.main = "README.rdoc"
-  
-  rd.rdoc_files.include("README.rdoc","lib/**/*.rb","bin/**/*")
-end
-
-task :default => [:spec,:features]
 

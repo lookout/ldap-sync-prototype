@@ -2,64 +2,57 @@
 # for role manipulation used in ldap-sync.
 
 module Conjur::Ldap::Roles
-  # Modifies LDAP roles in Conjur to reflect given target hash.
-  #
-  # Keys in the given hash are understood to represent user group (names);
-  # the corresponding values should be string arrays of user names.
-  #
-  # Groups are created as +ldap-group+ roles and users as +ldap-group+.
-  # If a hierarchy already exists, it is adjusted to the target by changing
-  # corresponding role memberships.
-  #
-  # Because it's not allowed to delete roles in Conjur, any roles that are
+  include Conjur::Ldap::Logging
+  include Conjur::Ldap::Reporting
+  include Conjur::Ldap::Reporting::Helpers
+  # Modifies LDAP roles in Conjur to reflect the given LDAP structure
+  # 
+  # LDAP groups are mapped to Conjur groups, and LDAP users to Conjur 
+  # users.  Their names are preserved as-is, and their uidnumber and gidnumber
+  # are set from the LDAP gidNumber and uidNumber.
+  # 
+  # Because you can't delete roles Conjur, any roles that are
   # deleted in upstream are simply removed from all membership relations
   # (except the admin one).
   #
-  # @param [Array<Conjur::Ldap::Directory::Group] groups top level groups
+  # @param [Conjur::Ldap::Directory::Structure] target structure of the LDAP directory
   # @param [Hash] opts
   # @option opts [String] :owner (logged in conjur user) the role that will own
   #   all created assets.
   # @option opts [String] :prefix (created from owner) prefix to namespace created assets
-  # @option opts [Boolean] :save_passwords (false) whether to save credentials for users created
+  # @option opts [Boolean] :save_api_keys (false) whether to save credentials for users created
   #   in variables.
-  # @option opts [String] :ldap_agent_role when given, all created roles will be granted to this role.
+  # @option opts [Boolean] :import_ldap_ids (true) whether to import uids and gids from LDAP
+  #   This should not generally be set to false, but it gives an 'escape hatch' to allow import
+  #   in the face of collisions with existing Conjur roles.
   def sync_to target, opts
     @options = normalize_options opts
-    
     users = target.users
     groups = target.groups
     
     # First make sure that all of the user roles exist.
-    users.each{|u| find_or_create_user(u.name, u.uid)}
+    users.each{|u| find_or_create_user(prefixed(u.name), u.uid)}
     
     groups.each do |g|
-      group = find_or_create_group g.name, g.gid
-      update_group_memberships group, g.members.map{ |m| m.name rescue m } # WTF
+      group = find_or_create_group prefixed(g.name), g.gid
+      update_group_memberships(group, g.members.map{ |m| m.name rescue m }) unless group.nil?
     end
   end
 
   # @!attribute r frozen hash containing our options.
   attr_reader :options
-  
+
   def prefix; options[:prefix] end
   def owner; options[:owner] end
-  def save_passwords?; options[:save_passwords] end
-
-  def new_roles
-    @new_roles ||= []
-  end
-
+  def save_api_keys?; options[:save_api_keys] end
+  def ignore_ldap_ids?; options[:ignore_ldap_ids] end
 
   private
 
   # Normalize options given to #sync_to.
   def normalize_options opts
-     opts.slice(:owner,:prefix, :save_passwords)
-         .reverse_merge(save_passwords: false,
-                        prefix: default_prefix)
     opts[:owner] = find_role(opts[:owner] || current_role)
-    opts.freeze
-    opts
+    {save_api_keys: false, import_ldap_ids: true}.merge(opts).freeze
   end
 
   # Default value for our asset prefix, generated from the conjur username
@@ -69,44 +62,48 @@ module Conjur::Ldap::Roles
     username.remove /^.*\//
   end
 
-  # Finds the owner role
+  # Finds the owner role.  The role must exist and be a member of current_role
   # @return Conjur::Role
   def find_role id_or_role
     self.role(id_or_role).tap do |role|
       raise "Role #{id_or_role} does not exist!" unless role.exists?
+      raise "Role #{current_role.roleid} is not a member of #{id_or_role}" unless current_role.member_of?(role)
     end
   end
 
   # Find or create a Conjur user corresponding to the LDAP user
   #
   # @param [String] username the LDAP username
+  # @param [String, Fixnum] uid the LDAP uidNumber
   # @return [Conjur::User] the user
   def find_or_create_user username, uid
-    find_or_create :user, username, ownerid: owner.roleid, uidnumber: uid do |user|
-      save_user_password(user) if save_passwords?
+    uid = uid.to_i
+    user = self.user(username)
+    if user.exists?
+      report_update_user(username, uid){ user.update uidnumber: uid} if not ignore_ldap_ids? and user.attributes['uidnumber'] != uid
+    else
+      opts = {ownerid: owner.roleid}
+      opts = opts.merge(uidnumber: uid) unless ignore_ldap_ids?
+      user = report_create_user(username, uid){ create_user username, opts}
+      if user and save_api_keys?
+        variable = user_password_variable(user)
+        report_save_api_key(username,variable.id){ variable.add_value user.api_key }
+      end
     end
+    user
   end
 
   def find_or_create_group groupname, gid
-    # TODO use gid, but HOW?
-    find_or_create :group, groupname, ownerid: owner.roleid
-  end
-
-
-  def find_or_create kind, id, opts = {}
-    role_name = send(:"ldap_#{kind}", id)
-    role = send(kind.to_sym, role_name)
-    unless role.exists?
-      role = send(:"create_#{kind}", role_name, opts)
-      new_roles << role.role
-      yield role if block_given?
+    gid = gid.to_i
+    group = self.group(groupname)
+    if group.exists?
+      report_update_group(groupname, gid){group.update(gidnumber: gid)} if not ignore_ldap_ids? and group.attributes['gidnumber'] != gid
+    else
+      opts = {ownerid: owner.roleid}
+      opts = opts.merge(gidnumber: gid) unless ignore_ldap_ids?
+      group = report_create_group(groupname, gid){ create_group groupname, opts }
     end
-    role
-  end
-
-  def save_user_password user
-    password = user.password || user.api_key
-    user_password_variable(user).add_value(password)
+    group
   end
 
   
@@ -116,39 +113,33 @@ module Conjur::Ldap::Roles
   def update_group_memberships group, usernames
     members = group.role.members.reject{|grant| grant.member.kind != 'user'}.map{|grant| grant.member.identifier}
 
-    usernames.map{|u| ldap_user(u)}.each do |username|
+    usernames.map{|u| prefixed(u)}.each do |username|
       if members.member?(username)
         members.delete(username)
       else
-        group.add_member full_user_id(username)
+        report_add_member(group.id, username){ group.add_member full_user_id(username) }
       end
     end
 
     members.each do |member|
-      group.remove_member(full_user_id(member))
+      report_remove_member(group.id, member){ group.remove_member(full_user_id(member)) }
     end
-  end
-
-  # TODO refactor
-  # Create a namespaced ldap username
-  def ldap_user username
-    prefixed username
   end
 
   def full_user_id username
     [Conjur.configuration.account, 'user', username].join ':'
   end
 
-  def ldap_group groupname
-    prefixed groupname
-  end
-
   def prefixed name
-    "#{(prefix.nil? || prefix.empty?) ? 'ldap' : prefix}-#{name}"
+    if prefix and not prefix.empty?
+      "#{prefix}-#{name}"
+    else
+      name
+    end
   end
 
   def user_password_variable user
-    create_variable 'text/plain', 'conjur-api-key', id: "#{user.login}/password",ownerid: owner.roleid
+    create_variable 'text/plain', 'conjur-api-key', id: "#{user.login}/api-key", ownerid: owner.roleid
   end
 
 end
