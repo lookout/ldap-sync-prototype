@@ -117,7 +117,9 @@ Makefile contains several targets for this. All artifacts are stored under `./ac
 
 To launch tests from docker image, run following command
 
-    ```conjur env run -c acceptance.conjurenv -- make acceptance/results ```
+```
+$ conjur env run -c acceptance.conjurenv -- make acceptance/results 
+```
 
 Cleanup of Conjur server artifacts will be performed automatically.
 
