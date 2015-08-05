@@ -29,7 +29,7 @@ module Conjur
       rescue => e
         case e 
           when RestClient::Exception
-            log.error "LDAP sync failed: #{e}\n\t#{e.response.body}"
+            log.error "LDAP sync failed: #{e}\n\t#{e.response}"
           else
             log.error "LDAP sync failed: #{e}"
         end
@@ -48,7 +48,11 @@ module Conjur
       end
 
       def conjur
-        @conjur ||= Conjur::API.new_from_key(*conjur_credentials).extend Roles
+        unless @conjur
+          Conjur.config.apply_cert_config!
+          @conjur = Conjur::API.new_from_key(*conjur_credentials).extend Roles
+        end
+        @conjur
       end
 
       # Fetch credentials from environment, returns a [login, password] pair
