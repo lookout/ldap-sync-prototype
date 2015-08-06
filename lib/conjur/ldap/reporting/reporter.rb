@@ -3,14 +3,13 @@ module Conjur::Ldap
     class Reporter
       include Conjur::Ldap::Logging
 
-      def initialize
-        log.debug "reporter created!"
+      def initialize options={}
         @reports = []
+        @trace = options[:trace] || true
       end
 
       def dump io=$stdout
-        log.debug "dumping #{@reports}\n#{actions}"
-        io.write(to_json)
+
       end
       
       def to_json
@@ -31,13 +30,16 @@ module Conjur::Ldap
       end
 
       def report tag, extras = {}
-        log.debug "report #{tag}, #{extras}"
         @reports << (report = Report.new tag, extras)
         begin
-          (yield if block_given?).tap{ report.succeed! }
+          (yield if block_given?).tap{
+            report.succeed!
+            puts report.format
+          }
         rescue => ex
           logger.error "error in action for #{tag}: #{ex}\n\t#{ex.backtrace.join("\n\t")}"
           report.fail! ex
+          puts report.format
           nil
         end
       end
@@ -51,6 +53,14 @@ module Conjur::Ldap
         end
 
         attr_reader :tag
+
+        def format
+          "#{@tag}: #{format_extras}"
+        end
+
+        def format_extras
+          @extras.collect{|k,v| "#{k}=#{v}"}.join ", "
+        end
 
         def extras
           @extras ||= {}

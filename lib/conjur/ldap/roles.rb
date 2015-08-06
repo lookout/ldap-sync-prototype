@@ -121,6 +121,10 @@ module Conjur::Ldap::Roles
       end
     end
 
+    if owner
+      members = members.reject{|m| m == owner.identifier }
+    end
+
     members.each do |member|
       report_remove_member(group.id, member){ group.remove_member(full_user_id(member)) }
     end
