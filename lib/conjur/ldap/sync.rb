@@ -42,11 +42,11 @@ module Conjur
       def adapter opts={}
         adapter_opts = opts.reverse_merge(mode: :posix)
           .merge(directory: directory(opts))
-        @adapter ||= Adapter[adapter_opts]
+        Adapter.for adapter_opts
       end
 
       def directory opts
-        @directory ||= Treequel.directory_from_config.tap do |dir|
+        Treequel.directory_from_config.tap do |dir|
           if opts[:bind_dn] and opts[:bind_password]
             dir.bind_as opts[:bind_dn], opts[:bind_password]
           end
