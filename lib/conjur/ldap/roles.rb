@@ -11,7 +11,7 @@ module Conjur::Ldap::Roles
   # users.  Their names are preserved as-is, and their uidnumber and gidnumber
   # are set from the LDAP gidNumber and uidNumber.
   # 
-  # Because you can't delete roles Conjur, any roles that are
+  # Because you can't delete roles Conjur, any roles that are``
   # deleted in upstream are simply removed from all membership relations
   # (except the admin one).
   #
@@ -121,6 +121,9 @@ module Conjur::Ldap::Roles
       end
     end
 
+    # Don't remove the owner, or non prefixed roles (if we have a prefix).
+    # TODO we should really use some sort of metadata to indicate that
+    # the groups and users are in fact ours here.
     if owner
       members = members.reject{|m| m == owner.identifier }
     end
