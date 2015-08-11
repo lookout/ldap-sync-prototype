@@ -3,7 +3,7 @@ require 'conjur/ldap/logging'
 require 'conjur/ldap/reporting'
 require 'conjur/ldap/reporting/helpers'
 require 'conjur/ldap/sync/version'
-require 'conjur/ldap/directory'
+require 'conjur/ldap/adapter'
 require 'conjur/ldap/roles'
 require 'treequel'
 require 'pp'
@@ -25,7 +25,7 @@ module Conjur
       # @option opts [Boolean] :save_passwords (false) whether to save credentials for users created
       #   in variables.
       def run_sync opts
-        conjur.sync_to directory(opts).posix_groups, opts
+        conjur.sync_to adapter(opts).load_model, opts
       rescue => e
         case e 
           when RestClient::Exception
@@ -39,8 +39,14 @@ module Conjur
         reporter.dump
       end
 
-      def directory opts={}
-        @directory ||= Treequel.directory_from_config.extend(Directory).tap do |dir|
+      def adapter opts={}
+        adapter_opts = opts.reverse_merge(mode: :posix)
+          .merge(directory: directory(opts))
+        @adapter ||= Adapter[adapter_opts]
+      end
+
+      def directory opts
+        @directory ||= Treequel.directory_from_config.tap do |dir|
           if opts[:bind_dn] and opts[:bind_password]
             dir.bind_as opts[:bind_dn], opts[:bind_password]
           end
