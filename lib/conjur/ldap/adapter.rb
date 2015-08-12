@@ -18,10 +18,6 @@ module Conjur::Ldap
         adapter_classes[mode] || missing_adapter!
       end
 
-      def []= mode, klass
-        adapter_classes[mode.to_sym] = klass
-      end
-
       def register_adapter_class name
         Conjur::Ldap::Adapter.adapter_classes[name] = self
       end
