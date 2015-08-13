@@ -8,7 +8,9 @@ require 'securerandom'
 module ConjurHelpers
   Conjur.configuration.account = ENV['CONJUR_ACCOUNT'] || 'ci'
 
-  BASE_CONJUR = Conjur::API.new_from_key(ENV['CONJUR_USERNAME'], ENV['CONJUR_API_KEY'])
+  BASE_CONJUR = Conjur::API.new_from_key(
+      ENV['CONJUR_USERNAME'] || ENV['CONJUR_AUTHN_LOGIN'],
+      ENV['CONJUR_API_KEY'])
 
   attr_reader :conjur
   attr_reader :conjur_prefix
