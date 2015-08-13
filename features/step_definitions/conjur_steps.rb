@@ -10,10 +10,15 @@ end
 
 
 When %r{^I(?: can)?((?: not)|(?: successfully))? sync(?: with options "(.*)")?$} do |success, options|
-  set_env 'CONJUR_LDAP_SYNC_PREFIX', conjur_prefix
-  command = mangle_name "conjur-ldap-sync #{options}"
+  set_environment_variable 'CONJUR_LDAP_SYNC_PREFIX', conjur_prefix
+  command = mangle_name "./bin/conjur-ldap-sync #{options}"
   if success.strip == 'successfully'
-    run_simple unescape(command), true
+    run_simple unescape(command), false
+    unless last_command.exit_status == 0
+      puts "failed to run #{command} | output => \n#{last_command.output}"
+      assert_success
+
+    end
   else
     run_simple unescape(command), false
     if success.strip == 'not'

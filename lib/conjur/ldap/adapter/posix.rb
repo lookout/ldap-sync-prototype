@@ -37,22 +37,26 @@ class Conjur::Ldap::Adapter
 
     def group_from_branch branch
       name = first_of(branch['cn'])
-      gid  = first_of(branch['gidNumber']).to_i
+      gid  = first_of(branch['gidnumber']).to_i
       group(name,nil,gid).tap do |g|
         array_of(branch['members']).each{|uid| g.members << uid}
       end
     end
 
     def user_from_branch branch
+      puts "user_from_branch: #{branch.inspect}"
+      puts "uid is #{branch['uid']}"
+      puts "uid of entry is #{branch.entry['uid']}"
       name = first_of(branch['uid'])
-      uid  = first_of(branch['uidNumber']).to_i
+      uid  = first_of(branch['uidnumber']).to_i
       user(name, nil, uid).tap do |u|
-        array_of(branch['gidNumber']).each{ |gid| u.groups << gid }
+        array_of(branch['gidnumber']).each{ |gid| u.groups << gid }
       end
     end
 
     private
     def first_of val
+      puts "first_of #{val} (array? #{val.kind_of?(Array)} fst=#{val.first})"
       (val.kind_of?(Array) ? val.first : val).tap do |v|
         raise 'missing value' if v.nil?
       end

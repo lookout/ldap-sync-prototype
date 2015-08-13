@@ -7,6 +7,7 @@ require 'securerandom'
 
 module ConjurHelpers
   Conjur.configuration.account = ENV['CONJUR_ACCOUNT'] || 'ci'
+  Conjur.configuration.apply_cert_config!
 
   BASE_CONJUR = Conjur::API.new_from_key(
       ENV['CONJUR_USERNAME'] || ENV['CONJUR_AUTHN_LOGIN'],
@@ -53,6 +54,7 @@ module ConjurHelpers
   def run_sync_opts; @run_sync_opts ||= {} end
   attr_accessor :run_sync_called
   alias run_sync_called? run_sync_called
+
 
   def expected_actions_from_table table
     table = table.hashes unless table.kind_of?(Array)
