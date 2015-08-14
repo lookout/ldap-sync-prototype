@@ -24,8 +24,11 @@ class App
   options[:prefix] = ENV['CONJUR_LDAP_SYNC_PREFIX']
   options[:bind_password] = ENV['CONJUR_LDAP_PASSWORD']
   options[:format] = :json
+  options[:mode] = :posix
 
   on '--format [FORMAT]', [:text,:json], 'Output format for reporting (text, json)'
+
+  on '--mode [MODE]', [:posix,:active_directory], 'Flavor of LDAP to expect from the server'
 
   on '--owner OWNER', 'Role that will own all groups, users, and variables created'
 
