@@ -6,6 +6,14 @@ module Conjur
         base.extend self
       end
 
+      # Valid formats are :text and :json
+      def self.output_format= fmt
+        reporter.output_format = fmt
+      end
+
+      def self.output_format
+        reporter.output_format
+      end
       
       def self.report *args, &block
         reporter.report *args, &block

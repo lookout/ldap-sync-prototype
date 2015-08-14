@@ -3,15 +3,24 @@ module Conjur::Ldap
     class Reporter
       include Conjur::Ldap::Logging
 
+      attr_accessor :io
+
+      def output_format
+        @output_format ||= :json
+      end
+
+      def output_format= fmt
+        unless [:text, :json].include? fmt
+          raise "output_format must be :text or :json (got '#{fmt}'"
+        end
+        @output_format = fmt
+      end
+
       def initialize options={}
         @reports = []
-        @trace = options[:trace] || true
+        @io = options[:io] || $stderr
       end
 
-      def dump io=$stdout
-
-      end
-      
       def to_json
         as_json.to_json
       end
@@ -24,24 +33,35 @@ module Conjur::Ldap
       def reports
         @reports.dup
       end
-      
+
       def actions
         @reports.map(&:as_json)
       end
 
       def report tag, extras = {}
-        @reports << (report = Report.new tag, extras)
+        report = Report.new tag, extras
+        result = nil
         begin
-          (yield if block_given?).tap{
-            report.succeed!
-            puts report.format
-          }
+          result = yield if block_given?
         rescue => ex
           logger.error "error in action for #{tag}: #{ex}\n\t#{ex.backtrace.join("\n\t")}"
           report.fail! ex
-          puts report.format
-          nil
+        ensure
+          issue_report report
+          result
         end
+      end
+
+      def issue_report report
+        output = case output_format
+          when :json then
+            report.to_json
+          when :text then
+            report.format
+          else
+            raise 'Unreachable'
+        end
+        io.puts output
       end
 
       class Report
@@ -59,7 +79,7 @@ module Conjur::Ldap
         end
 
         def format_extras
-          @extras.collect{|k,v| "#{k}=#{v}"}.join ", "
+          @extras.collect { |k, v| "#{k}=#{v}" }.join ", "
         end
 
         def extras
