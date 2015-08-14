@@ -5,19 +5,23 @@ end
 
 Then(/^it should (not )?be a member of "(.*?)"$/) do |neg, role|
   role = @conjur.role(mangle_name role)
-  @last_role.member_of?(role).should == neg.nil?
+  if neg
+    expect(@last_role.member_of?(role)).to_not be_truthy
+  else
+    expect(@last_role.member_of?(role)).to be_truthy
+  end
 end
 
 
 When %r{^I(?: can)?((?: not)|(?: successfully))? sync(?: with options "(.*)")?$} do |success, options|
+  # TODO this is gross!
   set_environment_variable 'CONJUR_LDAP_SYNC_PREFIX', conjur_prefix
   command = mangle_name "./bin/conjur-ldap-sync #{options}"
   if success.strip == 'successfully'
     run_simple unescape(command), false
     unless last_command.exit_status == 0
       puts "failed to run #{command} | output => \n#{last_command.output}"
-      assert_success
-
+      assert_success true
     end
   else
     run_simple unescape(command), false
@@ -28,7 +32,7 @@ When %r{^I(?: can)?((?: not)|(?: successfully))? sync(?: with options "(.*)")?$}
 end
 
 Then %r{^it should (not )?be owned by "(.*?)"$} do |neg, owner|
-  owner = "conjur:#{mangle_name(owner)}"
+  owner = "#{Conjur.account}:#{mangle_name(owner)}"
   kind = @last_role.kind
   ownerid = conjur.send(kind, @last_role.identifier).ownerid
   if neg
@@ -52,7 +56,7 @@ end
 
 And %r{role "(.*?)" can execute the variable} do |role|
   role = conjur.role(mangle_name role)
-  expect(role.permitted?("conjur:variable:#{@last_variable_id}", 'execute')).to be_truthy
+  expect(role.permitted?("#{Conjur.account}:variable:#{@last_variable_id}", 'execute')).to be_truthy
 end
 
 Given %r{^a role named "(.*?)"$} do |rolename|
@@ -80,7 +84,6 @@ end
 
 Then %r{^the report should have actions:$} do |table|
   actual_reports = JSON.parse(only_processes.last.stdout)['actions']
-  puts "report: #{actual_reports}"
   expected_reports = expected_actions_from_table(table)
   expect(actual_reports.length).to eq(expected_reports.length)
   expected_reports.zip(actual_reports).each do |expected, actual|

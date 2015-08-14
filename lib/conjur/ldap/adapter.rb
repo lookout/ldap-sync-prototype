@@ -40,13 +40,23 @@ module Conjur::Ldap
 
       def << group
         groups << group
-        group.members << self
+        group.members << self unless group.members.include?(self)
       end
 
       def add_groups groups
         self.groups += groups
         groups.each{|group| group.members << self}
       end
+
+      def to_s
+        # cheap trick to avoid recursion into cycles
+        group_list = groups.map do |group|
+          "group:#{group.name rescue group}"
+        end
+        "<User name=#{name},dn=#{dn.inspect},uid=#{uid},groups=#{group_list}>"
+      end
+
+      alias inspect to_s
     end
 
     class Group < Struct.new(:name, :dn, :gid)
@@ -63,6 +73,16 @@ module Conjur::Ldap
         self.members += members
         members.each{|user| user.groups << self}
       end
+
+      def to_s
+        # cheap trick to avoid recursion into cycles
+        member_names = members.map do |member|
+          "user:#{member.name rescue member}"
+        end
+        "<Group name=#{name},dn=#{dn.inspect},gid=#{gid},members=#{member_names}>"
+      end
+
+      alias inspect to_s
     end
 
     attr_reader :options

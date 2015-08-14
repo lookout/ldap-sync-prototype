@@ -5,6 +5,7 @@ require 'conjur/ldap/reporting/helpers'
 require 'conjur/ldap/sync/version'
 require 'conjur/ldap/adapter'
 require 'conjur/ldap/roles'
+require 'patches/treequel'
 require 'treequel'
 require 'pp'
 
@@ -57,6 +58,7 @@ module Conjur
         unless @conjur
           Conjur.config.apply_cert_config!
           @conjur = Conjur::API.new_from_key(*conjur_credentials).extend Roles
+          puts "#{@conjur.username}"
         end
         @conjur
       end

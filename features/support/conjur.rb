@@ -9,6 +9,7 @@ module ConjurHelpers
   Conjur.configuration.account = ENV['CONJUR_ACCOUNT'] || 'ci'
   Conjur.configuration.apply_cert_config!
 
+
   BASE_CONJUR = Conjur::API.new_from_key(
       ENV['CONJUR_USERNAME'] || ENV['CONJUR_AUTHN_LOGIN'],
       ENV['CONJUR_API_KEY'])
@@ -34,10 +35,12 @@ module ConjurHelpers
     username = mangle_name('service/<prefix>')
 
     @service_role = BASE_CONJUR.create_role mangle_name('service:<prefix>')
-    key = BASE_CONJUR.create_authn_user(username)['api_key']
+    key = BASE_CONJUR.create_user(username).api_key
 
     @conjur = Conjur::API.new_from_key username, key
-
+    puts "login=#{username}, api_key=#{key}"
+    set_environment_variable 'CONJUR_USERNAME', username
+    set_environment_variable 'CONJUR_API_KEY', key
     ENV['CONJUR_USERNAME'] = username
     ENV['CONJUR_API_KEY'] = key
   end

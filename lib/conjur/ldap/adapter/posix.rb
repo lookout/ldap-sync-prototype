@@ -1,5 +1,6 @@
 class Conjur::Ldap::Adapter
   class Posix < self
+    include Conjur::Ldap::Logging
     register_adapter_class :posix
 
     def default_user_object_classes
@@ -24,13 +25,31 @@ class Conjur::Ldap::Adapter
       groups = groups_by_gid.values
       users  = users_by_name.values
 
+      log.info "groups before=#{groups.inspect}"
+      log.info "users before=#{users.inspect}"
+
+      # Map members of groups and groups of users onto actual objects.
+      # Note that we have to reject! nil members (which can occur if a
+      # directory specifies that a user is a member of a non-existant group,
+      # for example).
+
       groups.each do |group|
-        group.members.map!{|m| users_by_name[name] }
+        group.members.map!{|m| users_by_name[m] }.reject!{|m| m.nil?}
       end
 
       users.each do |user|
-        user.groups.map!{|g| groups_by_gid[g]}
+        user.groups.map!{|g| groups_by_gid[g.to_i]}.reject!{|m| m.nil?}
       end
+
+      groups.each do |group|
+        group.members.each{|m| m << group}
+      end
+      users.each do |user|
+        user.groups.each{|g| g << user}
+      end
+
+      log.info "users=#{users.inspect}"
+      log.info "groups=#{groups.inspect}"
 
       model users, groups
     end
@@ -39,24 +58,20 @@ class Conjur::Ldap::Adapter
       name = first_of(branch['cn'])
       gid  = first_of(branch['gidnumber']).to_i
       group(name,nil,gid).tap do |g|
-        array_of(branch['members']).each{|uid| g.members << uid}
+        array_of(branch['memberuid']).each{|uid| g.members << uid}
       end
     end
 
     def user_from_branch branch
-      puts "user_from_branch: #{branch.inspect}"
-      puts "uid is #{branch['uid']}"
-      puts "uid of entry is #{branch.entry['uid']}"
       name = first_of(branch['uid'])
       uid  = first_of(branch['uidnumber']).to_i
       user(name, nil, uid).tap do |u|
-        array_of(branch['gidnumber']).each{ |gid| u.groups << gid }
+        array_of(branch['gidnumber']).each{ |gid| u.groups << gid.to_i }
       end
     end
 
     private
     def first_of val
-      puts "first_of #{val} (array? #{val.kind_of?(Array)} fst=#{val.first})"
       (val.kind_of?(Array) ? val.first : val).tap do |v|
         raise 'missing value' if v.nil?
       end
