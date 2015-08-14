@@ -79,7 +79,8 @@ module Conjur::Ldap
         end
 
         def format_extras
-          @extras.collect { |k, v| "#{k}=#{v}" }.join ", "
+          # Sort to make the output reproducible
+          @extras.keys.sort.collect { |k| "#{k}=#{@extras[k]}" }.join ", "
         end
 
         def extras

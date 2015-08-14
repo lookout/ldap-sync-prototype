@@ -19,6 +19,13 @@ describe Conjur::Ldap::Reporting do
   end
 
   describe '#report' do
+    let(:output) { StringIO.new }
+
+    let(:output_lines) { output.string.split(/\n/) }
+    before do
+      subject.reporter.io = output
+    end
+
 
     def self.it_should_have_report attrs, &before
       it "should have report #{attrs}" do
@@ -56,49 +63,76 @@ describe Conjur::Ldap::Reporting do
         end
       end
     end
-    
-    describe 'after three calls to report' do
+
+    context 'with json output_format' do
+
+
       before do
-        subject.report :first
-        subject.report(:second, some_key: 'blah'){}
-        begin
-          subject.report(:third){ raise 'BOOM' }
-        rescue
-          # empty
-        end
+        subject.reporter.output_format = :json
       end
-      
-      describe 'reporter.dump' do
-        let(:dumped) do 
-          StringIO.new.tap do |io|
-            subject.reporter.dump io
-          end.string
-        end
-        
-        it 'is valid JSON' do
-          expect{JSON.parse(dumped)}.to_not raise_exception
-        end
-        
-        describe 'the parsed JSON' do
-          let(:json){ JSON.parse dumped }
-          it 'should be a hash with a single key "actions"' do
-            expect(json).to be_kind_of Hash
-            expect(json.size).to eq(1)
-            expect(json.keys).to eq(%w(actions))
+
+
+      describe 'after three calls to report' do
+        before do
+          subject.report :first
+          subject.report(:second, some_key: 'blah') {}
+          begin
+            subject.report(:third) { raise 'BOOM' }
+          rescue
+            # empty
           end
-          
-          describe 'json["actions"]' do
-            let(:actions){ json['actions'] }
+        end
+
+        describe 'reporter output' do
+          it 'is valid newline separated JSON' do
+            expect { output_lines.map { |line| JSON.parse(line) } }.to_not raise_exception
+          end
+
+          describe 'the parsed JSON' do
+            let(:json) { output_lines.map { |line| JSON.parse(line) } }
+
             it 'should be an array with three elements' do
-              expect(actions).to be_kind_of(Array)
-              expect(actions.length).to eq(3)
+              expect(json.length).to be(3)
             end
             it 'should have tags :first, :second, and :third' do
-              expect(actions.map{|a| a['tag']}).to eq(%w(first second third))
+              expect(json.map { |a| a['tag'] }).to eq(%w(first second third))
             end
             it 'should preserve extras' do
-              expect(actions[1]['some_key']).to eq('blah')
+              expect(json[1]['some_key']).to eq('blah')
             end
+          end
+        end
+      end
+    end
+
+    context 'with text output_format' do
+      before do
+        subject.reporter.output_format = :text
+      end
+
+      describe 'after three calls to report' do
+        before do
+          subject.report :first
+          subject.report :second, some_key: 'blah'
+          begin
+            subject.report(:third) { raise 'BOOM' }
+          rescue
+            # empty
+          end
+        end
+
+        describe 'the output' do
+
+          it 'has three elements' do
+            expect(output_lines).to have_length(3)
+          end
+
+          it 'has the right contents' do
+            expect(output_lines).to eq([
+                                           'first: result=success',
+                                           'second: result=success, some_key=blah',
+                                           'third: error=BOOM, result=failure'
+                                       ])
           end
         end
       end
