@@ -76,7 +76,7 @@ module ConjurHelpers
   end
 
   # Shorthand for unescape
-  def unescape *args, &bkl
+  def unescape *args, &blk
     Aruba::Platform.unescape *args, &blk
   end
 
