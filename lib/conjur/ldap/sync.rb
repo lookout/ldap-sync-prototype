@@ -26,6 +26,7 @@ module Conjur
       # @option opts [Boolean] :save_passwords (false) whether to save credentials for users created
       #   in variables.
       def run_sync opts
+        reporter.output_format = (opts[:format] || :json).to_sym
         conjur.sync_to adapter(opts).load_model, opts
       rescue => e
         case e 

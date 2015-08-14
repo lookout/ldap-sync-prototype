@@ -103,3 +103,10 @@ Then %r{^a user named "(.*?)" exists and does not have uid (\d+)} do |name, uid|
   expect(user).to exist
   expect(user.attributes['gidnumber'].to_s).to_not eq(uid.to_s)
 end
+
+Then %r{^the report should have text$} do |text|
+  expected_lines = mangle_name(insert_uids(text)).split(/\n/).map(&:strip).reject(&:blank?)
+  actual_lines = only_processes.last.stdout
+      .split(/\n/).map(&:strip).reject(&:blank?)
+  expect(actual_lines).to eq(expected_lines)
+end

@@ -65,3 +65,39 @@ Feature: A report of actions taken is generated
     Then the report should have actions:
       |       tag     |                extra_json                               |
       | remove_member |  {"group": "<prefix>-admins", "user": "<prefix>-alice"} |
+
+  Scenario: Text output format
+    Given I initially have an LDAP database with:
+        """
+        dn: uid=alice,dc=conjur,dc=net
+        cn: Alice
+        uid: alice
+        uidNumber: <uids[alice]>
+        gidNumber: <gids[users]>
+        homeDirectory: /home/alice
+        objectClass: posixAccount
+        objectClass: top
+
+        dn: cn=users,dc=conjur,dc=net
+        cn: users
+        gidNumber: <gids[users]>
+        objectClass: posixGroup
+        objectClass: top
+
+        dn: cn=admins,dc=conjur,dc=net
+        cn: admins
+        gidNumber: <gids[admins]>
+        objectClass: posixGroup
+        objectClass: top
+        memberUid: alice
+        """
+
+    And I successfully sync with options "--format text"
+    Then the report should have text
+      """
+      create_user: user=<prefix>-alice, uid=<uids[alice]>, result=success
+      create_group: group=<prefix>-users, gid=<gids[users]>, result=success
+      add_member: group=<prefix>-users, user=<prefix>-alice, result=success
+      create_group: group=<prefix>-admins, gid=<gids[admins]>, result=success
+      add_member: group=<prefix>-admins, user=<prefix>-alice, result=success
+      """

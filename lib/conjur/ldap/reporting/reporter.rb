@@ -42,13 +42,13 @@ module Conjur::Ldap
         report = Report.new tag, extras
         result = nil
         begin
-          result = yield if block_given?
+          (yield if block_given?).tap{ report.succeed! }
         rescue => ex
           logger.error "error in action for #{tag}: #{ex}\n\t#{ex.backtrace.join("\n\t")}"
           report.fail! ex
+          nil
         ensure
           issue_report report
-          result
         end
       end
 
