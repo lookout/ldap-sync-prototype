@@ -18,7 +18,7 @@ module Conjur::Ldap
 
       def initialize options={}
         @reports = []
-        @io = options[:io] || $stderr
+        @io = options[:io] || $stdout
       end
 
       def to_json
