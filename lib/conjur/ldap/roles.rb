@@ -2,6 +2,11 @@
 # for role manipulation used in ldap-sync.
 
 module Conjur::Ldap::Roles
+  # Constants for annotations
+  SOURCE_KEY = 'LdapSync/Source'
+  UPSTREAM_DN_KEY = 'LdapSync/UpstreamDN'
+
+
   include Conjur::Ldap::Logging
   include Conjur::Ldap::Reporting
   include Conjur::Ldap::Reporting::Helpers
@@ -31,10 +36,10 @@ module Conjur::Ldap::Roles
     groups = target.groups
     
     # First make sure that all of the user roles exist.
-    users.each{|u| find_or_create_user(prefixed(u.name), u.uid)}
+    users.each{|u| find_or_create_user(prefixed(u.name), u.uid, u.dn)}
     
     groups.each do |g|
-      group = find_or_create_group prefixed(g.name), g.gid
+      group = find_or_create_group prefixed(g.name), g.gid, u.dn
       update_group_memberships(group, g.members.map{ |m| m.name rescue m }) unless group.nil?
     end
   end
@@ -46,7 +51,7 @@ module Conjur::Ldap::Roles
   def owner; options[:owner] end
   def save_api_keys?; options[:save_api_keys] end
   def ignore_ldap_ids?; options[:ignore_ldap_ids] end
-
+  def marker_tag; options[:marker_tag] end
   private
 
   # Normalize options given to #sync_to.
@@ -76,7 +81,7 @@ module Conjur::Ldap::Roles
   # @param [String] username the LDAP username
   # @param [String, Fixnum] uid the LDAP uidNumber
   # @return [Conjur::User] the user
-  def find_or_create_user username, uid
+  def find_or_create_user username, uid, dn=nil
     uid = uid.to_i
     user = self.user(username)
     if user.exists?
@@ -90,10 +95,10 @@ module Conjur::Ldap::Roles
         report_save_api_key(username,variable.id){ variable.add_value user.api_key }
       end
     end
-    user
+    user.tap{|u| add_marker_annotation(u, dn)}
   end
 
-  def find_or_create_group groupname, gid
+  def find_or_create_group groupname, gid, dn=nil
     gid = gid.to_i
     group = self.group(groupname)
     if group.exists?
@@ -103,7 +108,7 @@ module Conjur::Ldap::Roles
       opts = opts.merge(gidnumber: gid) unless ignore_ldap_ids?
       group = report_create_group(groupname, gid){ create_group groupname, opts }
     end
-    group
+    group.tap{|g| add_marker_annotation(g, dn)}
   end
 
   
@@ -147,6 +152,13 @@ module Conjur::Ldap::Roles
 
   def user_password_variable user
     create_variable 'text/plain', 'conjur-api-key', id: "#{user.login}/api-key", ownerid: owner.roleid
+  end
+
+  def add_marker_annotation asset, dn
+    asset.resource.annotations.merge!(
+        SOURCE_KEY => marker_tag,
+        UPSTREAM_DN_KEY => dn
+    )
   end
 
 end
