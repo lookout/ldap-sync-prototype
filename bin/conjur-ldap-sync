@@ -23,7 +23,10 @@ class App
   options[:ignore_ldap_ids] = false
   options[:prefix] = ENV['CONJUR_LDAP_SYNC_PREFIX']
   options[:bind_password] = ENV['CONJUR_LDAP_PASSWORD']
-  
+  options[:format] = :json
+
+  on '--format [FORMAT]', [:text,:json], 'Output format for reporting (text, json)'
+
   on '--owner OWNER', 'Role that will own all groups, users, and variables created'
 
   on('--save-api-keys', 'When present, passwords will be saved to variables'){ options[:save_api_keys] = true}
@@ -33,6 +36,16 @@ class App
   on('--bind-password PASS','Bind password for the LDAP server'){|val| options[:bind_password] = val}
 
   on('--no-ldap-ids', "Don't import LDAP uids and gids"){ options[:ignore_ldap_ids] = true }
+
+  on('--group-object-classes [CLASSES]', Array,
+     'LDAP objectClasses that should be imported as groups') do |ocs|
+    options[:group_object_classes] = ocs
+  end
+
+  on('--user-object-classes [CLASSES]', Array,
+     'LDAP objectClasses that should be imported as users') do |ocs|
+    options[:user_object_classes] = ocs
+  end
 
   go!
 end
