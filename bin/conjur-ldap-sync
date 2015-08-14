@@ -25,7 +25,7 @@ class App
   options[:bind_password] = ENV['CONJUR_LDAP_PASSWORD']
   options[:format] = :json
   options[:mode] = :posix
-  options[:marker_tag] = 'ImportedFrom=LDAP'
+  options[:marker_tag] = 'LDAP'
 
   on '--format FORMAT', [:text,:json],
      'Output format for reporting (text, json)'
@@ -53,9 +53,9 @@ class App
     options[:user_object_classes] = ocs
   end
 
-  on '--annotate KEY=VALUE', Conjur::Ldap::Roles::MARKER_TAG_PATTERN,
-      'Marker annotation for assets imported from ldap.' do |tag|
-    options[:marker_tag] = tag[0] # Tag is a match object
+  on '--source-tag TAG',
+      'Annotation added to assets imported from ldap.' do |tag|
+    options[:marker_tag] = tag
   end
 
   
