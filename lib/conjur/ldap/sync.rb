@@ -33,11 +33,9 @@ module Conjur
             log.error "LDAP sync failed: #{e}\n\t#{e.response}"
           else
             log.error "LDAP sync failed: #{e}"
+            log.error "backtrace:\n#{$@.join "\n\t"}"
+            raise e
         end
-        log.error "backtrace:\n#{$@.join "\n\t"}"
-        raise e
-      ensure
-        reporter.dump
       end
 
       def adapter opts={}
@@ -58,7 +56,6 @@ module Conjur
         unless @conjur
           Conjur.config.apply_cert_config!
           @conjur = Conjur::API.new_from_key(*conjur_credentials).extend Roles
-          puts "#{@conjur.username}"
         end
         @conjur
       end
