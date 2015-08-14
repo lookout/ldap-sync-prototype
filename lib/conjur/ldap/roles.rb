@@ -39,7 +39,7 @@ module Conjur::Ldap::Roles
     users.each{|u| find_or_create_user(prefixed(u.name), u.uid, u.dn)}
     
     groups.each do |g|
-      group = find_or_create_group prefixed(g.name), g.gid, u.dn
+      group = find_or_create_group prefixed(g.name), g.gid, g.dn
       update_group_memberships(group, g.members.map{ |m| m.name rescue m }) unless group.nil?
     end
   end
@@ -51,7 +51,9 @@ module Conjur::Ldap::Roles
   def owner; options[:owner] end
   def save_api_keys?; options[:save_api_keys] end
   def ignore_ldap_ids?; options[:ignore_ldap_ids] end
-  def marker_tag; options[:marker_tag] end
+  def marker_tag
+    options[:marker_tag] || current_role.roleid
+  end
   private
 
   # Normalize options given to #sync_to.

@@ -57,7 +57,7 @@ class Conjur::Ldap::Adapter
     def group_from_branch branch
       name = first_of(branch['cn'])
       gid  = first_of(branch['gidnumber']).to_i
-      dn   = first_of(branch['dn'])
+      dn   = branch.dn # Not included in the hash
       group(name,dn,gid).tap do |g|
         array_of(branch['memberuid']).each{|uid| g.members << uid}
       end
@@ -66,7 +66,7 @@ class Conjur::Ldap::Adapter
     def user_from_branch branch
       name = first_of(branch['uid'])
       uid  = first_of(branch['uidnumber']).to_i
-      dn   = first_of(branch['dn'])
+      dn   = branch.dn # DN is not included in the entry hash
       user(name, dn, uid).tap do |u|
         array_of(branch['gidnumber']).each{ |gid| u.groups << gid.to_i }
       end

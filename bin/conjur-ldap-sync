@@ -25,7 +25,6 @@ class App
   options[:bind_password] = ENV['CONJUR_LDAP_PASSWORD']
   options[:format] = :json
   options[:mode] = :posix
-  options[:marker_tag] = 'LDAP'
 
   on '--format FORMAT', [:text,:json],
      'Output format for reporting (text, json)'
