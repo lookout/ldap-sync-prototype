@@ -32,7 +32,7 @@ class Conjur::Ldap::Adapter
         end
         users << user
       end
-      model groups, users
+      model users, groups
     end
 
     private
@@ -53,7 +53,7 @@ class Conjur::Ldap::Adapter
     end
 
     def group_from_branch branch_hash
-      gid = branch_hash['gidNumber']
+      gid = branch_hash['gidNumber'].to_i
       dn = branch_hash['distinguishedName']
       cn  = branch_hash['cn']
       group massage_cn(cn), dn, gid
