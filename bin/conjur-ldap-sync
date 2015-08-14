@@ -25,10 +25,13 @@ class App
   options[:bind_password] = ENV['CONJUR_LDAP_PASSWORD']
   options[:format] = :json
   options[:mode] = :posix
+  options[:marker_tag] = 'ImportedFrom=LDAP'
 
-  on '--format [FORMAT]', [:text,:json], 'Output format for reporting (text, json)'
+  on '--format [FORMAT]', [:text,:json],
+     'Output format for reporting (text, json)'
 
-  on '--mode [MODE]', [:posix,:active_directory], 'Flavor of LDAP to expect from the server'
+  on '--mode [MODE]', [:posix,:active_directory],
+     'Flavor of LDAP to expect from the server (posix, active_directory)'
 
   on '--owner OWNER', 'Role that will own all groups, users, and variables created'
 
@@ -49,6 +52,13 @@ class App
      'LDAP objectClasses that should be imported as users') do |ocs|
     options[:user_object_classes] = ocs
   end
+
+  on '--marker-tag [TAG]',
+      'Annotate objects imported from LDAP with this tag. May be in the form of "key=value" or "value"' do |tag|
+    options[:marker_tag] = tag
+  end
+
+  
 
   go!
 end
