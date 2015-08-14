@@ -3,8 +3,8 @@
 
 module Conjur::Ldap::Roles
   # Constants for annotations
-  SOURCE_KEY = 'LdapSync/Source'
-  UPSTREAM_DN_KEY = 'LdapSync/UpstreamDN'
+  SOURCE_KEY = 'ldap-sync/source'
+  UPSTREAM_DN_KEY = 'ldap-sync/upstream-dn'
 
 
   include Conjur::Ldap::Logging
