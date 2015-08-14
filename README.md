@@ -77,11 +77,20 @@ The `conjur-ldap-sync` command accepts the following options:
     --bind-dn DN                 DN to use for authenticated binds.  If present, --bind-password must also be given.
     --bind-password PASS         Password to use for authenticated binds.  You can also use the environment variable
                                     CONJUR_LDAP_PASSWORD to avoid placing secrets on the command line.
+    --format [FORMAT]            Output format for reporting (text, json)
+                                     (default: json)
+    --mode [MODE]                Flavor of LDAP to expect from the server (posix, active_directory)
+                                     (default: posix)
+    --group-object-classes [CLASSES] LDAP objectClasses that should be imported as groups
+    --user-object-classes [CLASSES] LDAP objectClasses that should be imported as users
 
 
 The `--save-api-keys` is off by default, but recommended if you want to allow created roles to login to
 Conjur.
 
+## LDAP Flavors
+
+Active Directory returns a directory structure that differs from posix (OpenLDAP, Apache DS, OpenDJ, and others) structures.  You can tell ldap-sync to use assume Active Directory structures with `--mode active_directory`.  You can also conrol the records that are selected for groups and users with `--user-object-classes oc1,oc2` and `--group-object-classes oc1,oc2`.
 
 ## Reports
 
