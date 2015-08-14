@@ -83,7 +83,7 @@ Then %r{^a group named "(.*?)" exists and has the gid for "(.*?)"$} do |groupnam
 end
 
 Then %r{^the report should have actions:$} do |table|
-  actual_reports = JSON.parse(only_processes.last.stdout)['actions']
+  actual_reports = only_processes.last.stdout.split(/\n/).map{|l| JSON.parse(l)}
   expected_reports = expected_actions_from_table(table)
   expect(actual_reports.length).to eq(expected_reports.length)
   expected_reports.zip(actual_reports).each do |expected, actual|
