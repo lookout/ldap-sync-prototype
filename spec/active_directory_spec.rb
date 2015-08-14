@@ -111,7 +111,7 @@ describe Conjur::Ldap::Adapter::ActiveDirectory do
       it 'returns a DnsAdmins group with Alice and Administrator as members' do
         expect(found = subject.group_named('DnsAdmins')).to_not be_nil
         expect(found).to have_member_named 'Alice'
-        expect(found).to have_member_named 'Alice'
+        expect(found).to have_member_named 'Administrator'
         expect(found.members.length).to be(2)
       end
 
