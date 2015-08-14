@@ -38,7 +38,6 @@ module ConjurHelpers
     key = BASE_CONJUR.create_user(username).api_key
 
     @conjur = Conjur::API.new_from_key username, key
-    puts "login=#{username}, api_key=#{key}"
     set_environment_variable 'CONJUR_USERNAME', username
     set_environment_variable 'CONJUR_API_KEY', key
     ENV['CONJUR_USERNAME'] = username
@@ -74,6 +73,11 @@ module ConjurHelpers
     expected.each do |key, value|
       expect(value).to eq(actual[key])
     end
+  end
+
+  # Shorthand for unescape
+  def unescape *args, &bkl
+    Aruba::Platform.unescape *args, &blk
   end
 
 end
