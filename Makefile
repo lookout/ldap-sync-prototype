@@ -20,7 +20,7 @@ BUILDDIR:=build
 BASE_DOCKER_CONTEXT :=$(BUILDDIR)/context/base
 TEST_DOCKER_CONTEXT :=$(BUILDDIR)/context/test
 BASE_TAG :=$(BASE_IMAGE_NAME):build_$(BUILD_NUMBER)
-TEST_TAG :=$(TEST_IMAGE_NAME):build_$(BUILD_NUMBER)
+TEST_TAG ?=$(TEST_IMAGE_NAME):build_$(BUILD_NUMBER)
 
 BASE_SOURCES:=bin lib Gemfile* *.gemspec
 BASE_DEPS:=$(BASE_SOURCES) $(shell find bin/) $(shell find lib/) Dockerfile
@@ -121,8 +121,8 @@ acceptance/clean:
 
 ifdef CONJUR_DOCKER_REGISTRY
 acceptance/prerequisites: conjur-ha
-	docker pull $(CONJUR_DOCKER_REGISTRY)/$(TEST_IMAGE_NAME)
-	docker tag -f $(CONJUR_DOCKER_REGISTRY)/$(TEST_IMAGE_NAME) $(TEST_IMAGE_NAME):latest
+	docker pull $(CONJUR_DOCKER_REGISTRY)/$(TEST_TAG)
+	#docker tag -f $(CONJUR_DOCKER_REGISTRY)/$(TEST_IMAGE_NAME) $(TEST_IMAGE_NAME):latest
 else
 acceptance/prerequisites: build/test
 endif
@@ -182,7 +182,7 @@ acceptance/run: $(TESTDIR) $(HOSTFILE) $(PASSWORDFILE)
 		-e CONJUR_APPLIANCE_HOSTNAME="$(shell cat $(HOSTFILE) )"			\
 		-e CONJUR_ADMIN_PASSWORD_FILE=/tmp/conjur-admin-password	        \
 		-v $(abspath $(PASSWORDFILE)):/tmp/conjur-admin-password			\
-		$(TEST_IMAGE_NAME)                                                  \
+		$(TEST_TAG)                                                  \
 			; echo $$? >> $(EXITCODEFILE)
 	if [ ! -f $(CIDFILE) ]; then exit 1 ; fi
 
