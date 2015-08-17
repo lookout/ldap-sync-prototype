@@ -52,13 +52,11 @@ For other options (such as using environment variables directly), please consult
 The `conjur-ldap-sync` program must be run with a Conjur Host identity that can create
 and modify roles.  We'll refer to this user as the **service**.
 
-To allow conjur-ldap-sync to connect to Conjur, make sure `CONJUR_USERNAME`
-and `CONJUR_API_KEY` environment variables correspond to a pre-created role
+To allow conjur-ldap-sync to connect to Conjur, make sure `CONJUR_AUTHN_LOGIN`
+and `CONJUR_AUTHN_API_KEY` environment variables correspond to a pre-created role
 dedicated for this purpose.  You must also set the `CONJUR_APPLIANCE_URL` and
 `CONJUR_ACCOUNT` variables appropriately.  These values **are not** loaded from
 `.conjurrc`.
-
-Note: `CONJUR_USERNAME` will soon be renamed `CONJUR_AUTHN_LOGIN`.
 
 ## Operation
 
@@ -103,8 +101,8 @@ In addition to logging various information to the `stderr` (configurable with th
 The tests expect the following variables to be defined in the environment:
 
  * `CONJUR_APPLIANCE_URL`: URL of the appliance used by the features, e.g. `https://conjur.mycompany.com/api`
- * `CONJUR_USERNAME`: The username to use when setting up test roles.
- * `CONJUR_API_KEY`:  The api key or password for the user.
+ * `CONJUR_AUTHN_LOGIN`: The username to use when setting up test roles.
+ * `CONJUR_AUTHN_API_KEY`:  The api key or password for the user.
     * As an alternative, `CONJUR_ADMIN_PASSWORD_FILE` could be used
  * `CONJUR_ACCOUNT`: Your Conjur account.
 

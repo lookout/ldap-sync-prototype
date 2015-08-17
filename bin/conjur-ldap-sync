@@ -28,7 +28,7 @@ class App
 
   on '--format [FORMAT]', [:text,:json], 'Output format for reporting (text, json)'
 
-  on '--mode [MODE]', [:posix,:active_directory], 'Flavor of LDAP to expect from the server'
+  on '--mode [MODE]', [:posix,:active_directory], 'Flavor of LDAP to expect from the server (posix)'
 
   on '--owner OWNER', 'Role that will own all groups, users, and variables created'
 

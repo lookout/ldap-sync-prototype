@@ -1,0 +1,33 @@
+#!/usr/bin/env ruby
+
+require 'rubydns'
+require 'rubydns/system'
+
+INTERFACES = [
+    [:udp, "127.0.0.1", 20570],
+    [:tcp, "127.0.0.1", 20570]
+]
+
+# Use upstream DNS for name resolution.
+UPSTREAM = RubyDNS::Resolver.new([[:udp, "8.8.8.8", 53], [:tcp, "8.8.8.8", 53]])
+
+docker_ip_addr = if docker_host = ENV['DOCKER_HOST']
+  require 'uri'
+  URI.parse(docker_host).host
+else
+  '127.0.0.1'
+end
+
+puts "Resolving DNS names *.docker to #{docker_ip_addr}"
+
+# Start the RubyDNS server
+RubyDNS::run_server(listen: INTERFACES) do
+    match(/\.docker$/, Resolv::DNS::Resource::IN::A) do |transaction, match_data|
+        transaction.respond!(docker_ip_addr)
+    end
+
+    # Default DNS handler
+    otherwise do |transaction|
+      transaction.passthrough!(UPSTREAM)
+    end
+end

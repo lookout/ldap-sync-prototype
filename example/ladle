@@ -1,0 +1,5 @@
+require 'ladle'
+Ladle::Server.new(port: 3897, ldif: File.expand_path('../test.ldif', __FILE__), domain: 'dc=conjur,dc=net', tmpdir: '/tmp', custom_schemas: %w(org.apache.directory.server.core.schema.bootstrap.NisSchema)).start
+while true
+  sleep 1
+end
