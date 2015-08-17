@@ -49,4 +49,4 @@ Feature: Entity annotations
     When I successfully sync with options "--source-tag 'some-other-source'"
     Then the resource "user:<prefix>-bob" should have annotation "ldap-sync/source"="some-other-source"
     And  the resource "group:<prefix>-users" should have annotation "ldap-sync/source"="some-other-source"
-
+    But the resource "group:<prefix>-users" should have annotation "ldap-sync/upstream-dn"="cn=users,dc=conjur,dc=net"

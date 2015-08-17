@@ -57,7 +57,5 @@ class App
     options[:marker_tag] = tag
   end
 
-  
-
   go!
 end
