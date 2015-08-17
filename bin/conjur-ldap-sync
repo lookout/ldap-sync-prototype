@@ -32,6 +32,7 @@ class App
   on '--mode MODE', [:posix,:active_directory],
      'Flavor of LDAP to expect from the server (posix, active_directory)'
 
+
   on '--owner OWNER', 'Role that will own all groups, users, and variables created'
 
   on('--save-api-keys', 'When present, passwords will be saved to variables'){ options[:save_api_keys] = true}

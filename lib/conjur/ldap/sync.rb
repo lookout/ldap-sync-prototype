@@ -55,17 +55,13 @@ module Conjur
 
       def conjur
         unless @conjur
-          Conjur.config.apply_cert_config!
-          @conjur = Conjur::API.new_from_key(*conjur_credentials).extend Roles
+          require 'conjur/cli'
+          require 'conjur/authn'
+          Conjur::Config.load
+          Conjur::Config.apply
+          @conjur = Conjur::Authn.connect(nil, false).extend Roles
         end
         @conjur
-      end
-
-      # Fetch credentials from environment, returns a [login, password] pair
-      def conjur_credentials
-        api_key = ENV['CONJUR_API_KEY'] or raise("Missing $CONJUR_API_KEY")
-        login = ENV['CONJUR_USERNAME'] or ENV['CONJUR_AUTHN_LOGIN'] or raise("You must provide $CONJUR_USERNAME or $CONJUR_AUTHN_LOGIN")
-        [login, api_key]
       end
     end
   end
