@@ -1,18 +1,10 @@
-require 'dotenv'
-Dotenv.load
-
 require 'active_support/dependencies/autoload'
 require 'conjur/api'
 require 'securerandom'
 
 module ConjurHelpers
-  Conjur.configuration.account = ENV['CONJUR_ACCOUNT'] || 'ci'
-  Conjur.configuration.apply_cert_config!
-
-
-  BASE_CONJUR = Conjur::API.new_from_key(
-      ENV['CONJUR_USERNAME'] || ENV['CONJUR_AUTHN_LOGIN'],
-      ENV['CONJUR_API_KEY'])
+  require 'conjur/authn'
+  BASE_CONJUR = Conjur::Authn.connect nil, noask: true
 
   attr_reader :conjur
   attr_reader :conjur_prefix
@@ -38,10 +30,10 @@ module ConjurHelpers
     key = BASE_CONJUR.create_user(username).api_key
 
     @conjur = Conjur::API.new_from_key username, key
-    set_environment_variable 'CONJUR_USERNAME', username
-    set_environment_variable 'CONJUR_API_KEY', key
-    ENV['CONJUR_USERNAME'] = username
-    ENV['CONJUR_API_KEY'] = key
+    set_environment_variable 'CONJUR_AUTHN_LOGIN', username
+    set_environment_variable 'CONJUR_AUTHN_API_KEY', key
+    ENV['CONJUR_AUTHN_LOGIN'] = username
+    ENV['CONJUR_AUTHN_API_KEY'] = key
   end
 
   def find_or_create_role rolename
