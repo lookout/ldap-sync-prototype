@@ -18,7 +18,7 @@ else
   '127.0.0.1'
 end
 
-puts docker_ip_addr
+puts "Resolving DNS names *.docker to #{docker_ip_addr}"
 
 # Start the RubyDNS server
 RubyDNS::run_server(listen: INTERFACES) do
