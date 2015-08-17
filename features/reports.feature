@@ -95,9 +95,9 @@ Feature: A report of actions taken is generated
     And I successfully sync with options "--format text"
     Then the report should have text
       """
-      create_user: user=<prefix>-alice, uid=<uids[alice]>, result=success
-      create_group: group=<prefix>-users, gid=<gids[users]>, result=success
-      add_member: group=<prefix>-users, user=<prefix>-alice, result=success
-      create_group: group=<prefix>-admins, gid=<gids[admins]>, result=success
-      add_member: group=<prefix>-admins, user=<prefix>-alice, result=success
+      create_user: result=success, uid=<uids[alice]>, user=<prefix>-alice
+      create_group: gid=<gids[users]>, group=<prefix>-users, result=success
+      add_member: group=<prefix>-users, result=success, user=<prefix>-alice
+      create_group: gid=<gids[admins]>, group=<prefix>-admins, result=success
+      add_member: group=<prefix>-admins, result=success, user=<prefix>-alice
       """
