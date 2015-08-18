@@ -110,3 +110,10 @@ Then %r{^the report should have text$} do |text|
       .split(/\n/).map(&:strip).reject(&:blank?)
   expect(actual_lines).to eq(expected_lines)
 end
+
+Then %r{^the resource "(.*?)" should have annotation "(.*?)"\s*=\s*"(.*?)"$} do |resource, key, value|
+  resource_id = "#{Conjur.account}:#{mangle_name(resource)}"
+  res = conjur.resource(resource_id)
+  expect(res).to exist
+  expect(res.annotations[key]).to eq(mangle_name(value))
+end

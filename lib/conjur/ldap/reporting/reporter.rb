@@ -5,6 +5,7 @@ module Conjur::Ldap
 
       attr_accessor :io
 
+
       def output_format
         @output_format ||= :json
       end
@@ -18,7 +19,11 @@ module Conjur::Ldap
 
       def initialize options={}
         @reports = []
-        @io = options[:io] || $stdout
+        if options[:disable_reports]
+          @io = nil
+        else
+          @io = options[:io] || $stdout
+        end
       end
 
       def to_json
@@ -61,7 +66,7 @@ module Conjur::Ldap
           else
             raise 'Unreachable'
         end
-        io.puts output
+        io && io.puts(output)
       end
 
       class Report
@@ -112,6 +117,7 @@ module Conjur::Ldap
           as_json.to_json
         end
       end
+
     end
   end
 end

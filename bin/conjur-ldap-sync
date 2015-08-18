@@ -26,9 +26,12 @@ class App
   options[:format] = :json
   options[:mode] = :posix
 
-  on '--format [FORMAT]', [:text,:json], 'Output format for reporting (text, json)'
+  on '--format FORMAT', [:text,:json],
+     'Output format for reporting (text, json)'
 
-  on '--mode [MODE]', [:posix,:active_directory], 'Flavor of LDAP to expect from the server (posix)'
+  on '--mode MODE', [:posix,:active_directory],
+     'Flavor of LDAP to expect from the server (posix, active_directory)'
+
 
   on '--owner OWNER', 'Role that will own all groups, users, and variables created'
 
@@ -40,14 +43,19 @@ class App
 
   on('--no-ldap-ids', "Don't import LDAP uids and gids"){ options[:ignore_ldap_ids] = true }
 
-  on('--group-object-classes [CLASSES]', Array,
+  on('--group-object-classes CLASS1,CLASS2,...', Array,
      'LDAP objectClasses that should be imported as groups') do |ocs|
     options[:group_object_classes] = ocs
   end
 
-  on('--user-object-classes [CLASSES]', Array,
+  on('--user-object-classes CLASS1,CLASS2,...', Array,
      'LDAP objectClasses that should be imported as users') do |ocs|
     options[:user_object_classes] = ocs
+  end
+
+  on '--source-tag TAG',
+      'Annotation added to assets imported from ldap.' do |tag|
+    options[:marker_tag] = tag
   end
 
   go!
