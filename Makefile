@@ -25,7 +25,7 @@ TEST_TAG ?=$(TEST_IMAGE_NAME):build_$(BUILD_NUMBER)
 BASE_SOURCES:=bin lib Gemfile* *.gemspec
 BASE_DEPS:=$(BASE_SOURCES) $(shell find bin/) $(shell find lib/) Dockerfile
 
-TEST_SOURCES=features spec Rakefile
+TEST_SOURCES=features spec Rakefile dns_server
 TEST_DEPS:=$(TEST_SOURCES) $(shell find features/) $(shell find spec/) Dockerfile.acceptance
 
 ##### Acceptance parameters
