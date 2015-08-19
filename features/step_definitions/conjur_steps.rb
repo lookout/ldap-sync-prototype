@@ -20,7 +20,7 @@ When %r{^I(?: can)?((?: not)|(?: successfully))? sync(?: with options "(.*)")?$}
   if success.strip == 'successfully'
     run_simple unescape(command), false
     unless last_command.exit_status == 0
-      puts "failed to run #{command} | output => \n#{last_command.output}"
+      puts "failed to run #{command} | (#{last_command.exit_status}) output => \n#{last_command.output}"
       assert_success true
     end
   else
@@ -85,6 +85,10 @@ end
 Then %r{^the report should have actions:$} do |table|
   actual_reports = only_processes.last.stdout.split(/\n/).map{|l| JSON.parse(l)}
   expected_reports = expected_actions_from_table(table)
+  puts "expected reports: #{expected_reports.pretty_inspect}"
+  puts "*" * 40
+  puts "actual reports: #{actual_reports.pretty_inspect}"
+
   expect(actual_reports.length).to eq(expected_reports.length)
   expected_reports.zip(actual_reports).each do |expected, actual|
     match_action expected, actual

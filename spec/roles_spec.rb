@@ -1,7 +1,9 @@
 require 'spec_helper'
 
 describe Conjur::Ldap::Roles do
-  subject{ double('api').extend(described_class) }
+  let(:api){ double('api') }
+  subject{ described_class.new(api, options) }
+
   let(:user){ double('user') }
   let(:group){ double('group') }
   let(:roleid){ 'owner-role' }
@@ -13,11 +15,15 @@ describe Conjur::Ldap::Roles do
         owner: roleid
     }
   end
+  let(:options){ base_opts }
 
   let(:annotations){ double('annotations') }
   let(:resource){ double('resource', annotations: annotations) }
-  let(:conjur_user){ double('conjur user', :exists? => false, resource: resource) }
-  let(:conjur_group){ double('conjur group', :exists? => false, resource: resource) }
+  let(:empty_role){ double('empty role', members: [], memberships: []) }
+  let(:conjur_user){ double('conjur user', :exists? => false, resource: resource,
+                            role: empty_role, name: user.name) }
+  let(:conjur_group){ double('conjur group', :exists? => false, resource: resource,
+                             role: empty_role, name: group.name) }
   let(:group){ double('group', name: 'users', dn: 'cn=users,dc=conjur,dc=net', gid: 1234, members: []) }
   let(:user){ double('user',name: 'alice', dn: 'cn=alice,dc=conjur,dc=net', uid: 123, groups: []) }
   let(:users){ [user] }
@@ -32,22 +38,23 @@ describe Conjur::Ldap::Roles do
     group.members << user
     user.groups << group
     allow(subject).to receive(:find_role).with(roleid).and_return role
-    allow(subject).to receive(:user).with(user.name).and_return(conjur_user)
-    allow(subject).to receive(:group).with(group.name).and_return(conjur_group)
-    allow(subject).to receive(:create_user).with(user.name, ownerid: roleid).and_return(conjur_user)
-    allow(subject).to receive(:create_group).with(group.name, ownerid: roleid).and_return(conjur_group)
+    allow(api).to receive(:user).with(user.name).and_return(conjur_user)
+    allow(api).to receive(:group).with(group.name).and_return(conjur_group)
+    allow(api).to receive(:create_user).with(user.name, ownerid: roleid).and_return(conjur_user)
+    allow(api).to receive(:create_group).with(group.name, ownerid: roleid).and_return(conjur_group)
   end
 
   shared_context 'no updates' do
     before do
-      allow(subject).to receive(:update_group_memberships)
+      allow(subject).to receive(:remove_user_from_groups)
+      allow(subject).to receive(:remove_members_from_group)
     end
-
   end
-
 
   describe 'annotations' do
     include_context 'no updates'
+
+    let(:options){ base_opts.merge(marker_tag: 'blah') }
 
     it 'adds them' do
       expect(annotations).to receive(:merge!).with(
@@ -58,15 +65,18 @@ describe Conjur::Ldap::Roles do
                                  'ldap-sync/source' => 'blah',
                                  'ldap-sync/upstream-dn' => user.dn
                              )
-      subject.sync_to model, base_opts.merge(marker_tag: 'blah')
+
+      subject.sync_to model
     end
 
     context 'with no :marker_tag option' do
       let(:current_roleid){ 'current-role-id' }
       let(:current_role){ double('current role', roleid: current_roleid) }
 
+      let(:options){ base_opts }
+
       before do
-        allow(subject).to receive(:current_role).and_return current_role
+        allow(api).to receive(:current_role).and_return current_role
       end
 
       it 'sets the ldap-sync/source annotation to the current role id' do
@@ -76,7 +86,7 @@ describe Conjur::Ldap::Roles do
                                      'ldap-sync/upstream-dn' => role.dn
                                  )
         end
-        subject.sync_to model, base_opts
+        subject.sync_to model
       end
     end
   end
