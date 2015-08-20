@@ -1,10 +1,12 @@
+
+
 Then(/^(?:the )?role "(.*?)" should exist$/) do |role|
   @last_role = @conjur.role(mangle_name role)
   @last_role.should exist
 end
 
 Then(/^it should (not )?be a member of "(.*?)"$/) do |neg, role|
-  role = @conjur.role(mangle_name role)
+  role = conjur.role(mangle_name role)
   if neg
     expect(@last_role.member_of?(role)).to_not be_truthy
   else
@@ -18,7 +20,7 @@ When %r{^I(?: can)?((?: not)|(?: successfully))? sync(?: with options "(.*)")?$}
   set_environment_variable 'CONJUR_LDAP_SYNC_PREFIX', conjur_prefix
   command = mangle_name "./bin/conjur-ldap-sync #{options}"
   if success.strip == 'successfully'
-    run_simple unescape(command), false
+    run_simple unescape_text(command), false
     unless last_command.exit_status == 0
       puts "failed to run #{command} | (#{last_command.exit_status}) output => \n#{last_command.output}"
       assert_success true
@@ -120,4 +122,21 @@ Then %r{^the resource "(.*?)" should have annotation "(.*?)"\s*=\s*"(.*?)"$} do 
   res = conjur.resource(resource_id)
   expect(res).to exist
   expect(res.annotations[key]).to eq(mangle_name(value))
+end
+
+When %r{^I create a (user|group) "(.*?)"$} do |kind, id|
+  id = mangle_name(id)
+  conjur.send :"create_#{kind}", id, ownerid: service_role.roleid
+end
+
+When %r{^I add user "(.*?)" to group "(.*?)"$} do |user_id, group_id|
+  group = conjur.group mangle_name(group_id)
+  user = conjur.user mangle_name(user_id)
+  group.add_member user
+end
+
+Then %r{^the role "(.*?)" should be a member of "(.*?)"$} do |member, role|
+  role = conjur.role(mangle_name(role))
+  member = conjur.role(mangle_name(member))
+  expect(member.member_of?(role)).to be_truthy
 end
