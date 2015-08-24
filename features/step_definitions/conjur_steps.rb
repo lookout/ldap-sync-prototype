@@ -87,9 +87,6 @@ end
 Then %r{^the report should have actions:$} do |table|
   actual_reports = only_processes.last.stdout.split(/\n/).map{|l| JSON.parse(l)}
   expected_reports = expected_actions_from_table(table)
-  puts "expected reports: #{expected_reports.pretty_inspect}"
-  puts "*" * 40
-  puts "actual reports: #{actual_reports.pretty_inspect}"
 
   expect(actual_reports.length).to eq(expected_reports.length)
   expected_reports.zip(actual_reports).each do |expected, actual|

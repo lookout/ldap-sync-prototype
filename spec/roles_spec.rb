@@ -4,8 +4,6 @@ describe Conjur::Ldap::Roles do
   let(:api){ double('api') }
   subject{ described_class.new(api, options) }
 
-  let(:user){ double('user') }
-  let(:group){ double('group') }
   let(:roleid){ 'owner-role' }
   let(:role){ double('owner-role', roleid: roleid) }
   let(:base_opts) do
@@ -23,7 +21,7 @@ describe Conjur::Ldap::Roles do
   let(:conjur_user){ double('conjur user', :exists? => false, resource: resource,
                             role: empty_role, name: user.name) }
   let(:conjur_group){ double('conjur group', :exists? => false, resource: resource,
-                             role: empty_role, name: group.name) }
+                             role: empty_role, name: group.name, id: group.name) }
   let(:group){ double('group', name: 'users', dn: 'cn=users,dc=conjur,dc=net', gid: 1234, members: []) }
   let(:user){ double('user',name: 'alice', dn: 'cn=alice,dc=conjur,dc=net', uid: 123, groups: []) }
   let(:users){ [user] }
@@ -48,6 +46,7 @@ describe Conjur::Ldap::Roles do
     before do
       allow(subject).to receive(:remove_user_from_groups)
       allow(subject).to receive(:remove_members_from_group)
+      allow(subject).to receive(:add_members_to_group)
     end
   end
 

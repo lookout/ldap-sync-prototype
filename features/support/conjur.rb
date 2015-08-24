@@ -69,7 +69,13 @@ module ConjurHelpers
 
   # Shorthand for unescape
   def unescape *args, &blk
-    Aruba::Platform.unescape *args, &blk
+    # This is needed because aruba keeps changing the damn
+    # method name!
+    if Aruba::Platform.respond_to?(:unescape)
+      Aruba::Platform.unescape *args, &blk
+    elsif respond_to?(:unescape_text)
+      unescape_text(*args,&blk)
+    end
   end
 
 end
