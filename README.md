@@ -90,7 +90,7 @@ and `--user-object-classes` flags, whose defaults are determined by the `--mode`
 ### Source Tags
 
 In order to prevent subsequent runs of `conjur-ldap-sync` from colliding or altering users and groups that
-were created by Conjur and not from LDAP, the tool applies an [annotation](LINK) named `ldap-sync/source`
+were created by Conjur and not from LDAP, the tool applies an [annotation](https://developer.conjur.net/reference/services/authorization/resource/annotate.html) named `ldap-sync/source`
 to the Conjur assets it creates, and only manipulates objects having these annotations.
 
 The value of this annotation is normally the id of the role as which the service is running, but you can 
