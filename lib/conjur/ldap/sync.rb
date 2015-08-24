@@ -27,7 +27,7 @@ module Conjur
       #   in variables.
       def run_sync opts
         reporter.output_format = (opts[:format] || :json).to_sym
-        conjur.sync_to adapter(opts).load_model, opts
+        Roles.new(conjur, opts).sync_to adapter(opts).load_model
       rescue => e
         case e 
           when RestClient::Exception
@@ -59,7 +59,7 @@ module Conjur
           require 'conjur/authn'
           Conjur::Config.load
           Conjur::Config.apply
-          @conjur = Conjur::Authn.connect(nil, false).extend Roles
+          @conjur = Conjur::Authn.connect(nil, false)
         end
         @conjur
       end
