@@ -1,5 +1,5 @@
-# A mixin for Conjur::API implementing utility functions
-# for role manipulation used in ldap-sync.
+# This class takes an abstract representation of an LDAP directory structure
+# and uses the Conjur api to synchronize Conjur with the LDAP structure.
 class Conjur::Ldap::Roles
   # Constants for annotations
   SOURCE_KEY = 'ldap-sync/source'
@@ -10,39 +10,22 @@ class Conjur::Ldap::Roles
   include Conjur::Ldap::Reporting
   include Conjur::Ldap::Reporting::Helpers
 
+
+  #
+  # @param [Conjur::API] conjur_api a Conjur api connection to perform the update.  Actions
+  #   will be performed as `conjur_api.current_role`
+  # @param [Hash] opts options for sync.
+  #
+  # TODO document opts
   def initialize conjur_api, opts
     @api = conjur_api
     @options = opts
   end
 
 
-  # Modifies LDAP roles in Conjur to reflect the given LDAP structure
-  # 
-  # LDAP groups are mapped to Conjur groups, and LDAP users to Conjur 
-  # users.  Their names are preserved as-is, and their uidnumber and gidnumber
-  # are set from the LDAP gidNumber and uidNumber.
-  # 
-  # Because you can't delete roles Conjur, any roles that are
-  # deleted in upstream are simply removed from all membership relations
-  # that were created by the tool.
+  # Perform the sync operation.
   #
-  # Thus, if you add a user imported from LDAP to a group that was *not* imported
-  # from LDAP, the user will remain in that group.  This also prevents important roles
-  # such as the owner (or the role as which the ldap-sync tool runs).
-  #
-  #
-  #
-  #
-  # @param [Conjur::Ldap::Directory::Structure] target structure of the LDAP directory
-  # @param [Hash] opts
-  # @option opts [String] :owner (logged in conjur user) the role that will own
-  #   all created assets.
-  # @option opts [String] :prefix (created from owner) prefix to namespace created assets
-  # @option opts [Boolean] :save_api_keys (false) whether to save credentials for users created
-  #   in variables.
-  # @option opts [Boolean] :import_ldap_ids (true) whether to import uids and gids from LDAP
-  #   This should not generally be set to false, but it gives an 'escape hatch' to allow import
-  #   in the face of collisions with existing Conjur roles.
+  # @param [Conjur::Ldap::Adapter::Model] target the LDAP directory structure
   def sync_to target
     @target  = target
     @options = normalize_options(@options) unless @options.frozen?
