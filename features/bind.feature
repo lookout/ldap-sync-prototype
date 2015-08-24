@@ -10,8 +10,8 @@ Feature: I can bind to the server
       cn: LDAP Admin
       uid: ldapAdmin
       sn: Whatever
-      uidNumber: 44
-      gidNumber: 30
+      uidNumber: <uids[ldapAdmin]>
+      gidNumber: <gids[ldapAdmins]>
       homeDirectory: /home/ldapADMIN
       objectClass: inetOrgPerson
       objectClass: posixAccount
@@ -22,7 +22,7 @@ Feature: I can bind to the server
       dn: uid=bob,dc=conjur,dc=net
       cn: Bob
       uid: bob
-      uidNumber 10
+      uidNumber <uids[bob]>
       objectClass: posixAccount
       objectClass: top
       """

@@ -1,19 +1,30 @@
+
+
 Then(/^(?:the )?role "(.*?)" should exist$/) do |role|
   @last_role = @conjur.role(mangle_name role)
   @last_role.should exist
 end
 
 Then(/^it should (not )?be a member of "(.*?)"$/) do |neg, role|
-  role = @conjur.role(mangle_name role)
-  @last_role.member_of?(role).should == neg.nil?
+  role = conjur.role(mangle_name role)
+  if neg
+    expect(@last_role.member_of?(role)).to_not be_truthy
+  else
+    expect(@last_role.member_of?(role)).to be_truthy
+  end
 end
 
 
 When %r{^I(?: can)?((?: not)|(?: successfully))? sync(?: with options "(.*)")?$} do |success, options|
-  set_env 'CONJUR_LDAP_SYNC_PREFIX', conjur_prefix
-  command = mangle_name "conjur-ldap-sync #{options}"
+  # TODO this is gross!
+  set_environment_variable 'CONJUR_LDAP_SYNC_PREFIX', conjur_prefix
+  command = mangle_name "./bin/conjur-ldap-sync #{options}"
   if success.strip == 'successfully'
-    run_simple unescape(command), true
+    run_simple unescape_text(command), false
+    unless last_command.exit_status == 0
+      puts "failed to run #{command} | (#{last_command.exit_status}) output => \n#{last_command.output}"
+      assert_success true
+    end
   else
     run_simple unescape(command), false
     if success.strip == 'not'
@@ -23,7 +34,7 @@ When %r{^I(?: can)?((?: not)|(?: successfully))? sync(?: with options "(.*)")?$}
 end
 
 Then %r{^it should (not )?be owned by "(.*?)"$} do |neg, owner|
-  owner = "conjur:#{mangle_name(owner)}"
+  owner = "#{Conjur.account}:#{mangle_name(owner)}"
   kind = @last_role.kind
   ownerid = conjur.send(kind, @last_role.identifier).ownerid
   if neg
@@ -47,7 +58,7 @@ end
 
 And %r{role "(.*?)" can execute the variable} do |role|
   role = conjur.role(mangle_name role)
-  expect(role.permitted?("conjur:variable:#{@last_variable_id}", 'execute')).to be_truthy
+  expect(role.permitted?("#{Conjur.account}:variable:#{@last_variable_id}", 'execute')).to be_truthy
 end
 
 Given %r{^a role named "(.*?)"$} do |rolename|
@@ -74,9 +85,12 @@ Then %r{^a group named "(.*?)" exists and has the gid for "(.*?)"$} do |groupnam
 end
 
 Then %r{^the report should have actions:$} do |table|
-  actual_reports = JSON.parse(only_processes.last.stdout)['actions']
-  puts "report: #{actual_reports}"
+  actual_reports = only_processes.last.stdout.split(/\n/).map{|l| JSON.parse(l)}
   expected_reports = expected_actions_from_table(table)
+  puts "expected reports: #{expected_reports.pretty_inspect}"
+  puts "*" * 40
+  puts "actual reports: #{actual_reports.pretty_inspect}"
+
   expect(actual_reports.length).to eq(expected_reports.length)
   expected_reports.zip(actual_reports).each do |expected, actual|
     match_action expected, actual
@@ -94,4 +108,35 @@ Then %r{^a user named "(.*?)" exists and does not have uid (\d+)} do |name, uid|
   user = conjur.user mangle_name(name)
   expect(user).to exist
   expect(user.attributes['gidnumber'].to_s).to_not eq(uid.to_s)
+end
+
+Then %r{^the report should have text$} do |text|
+  expected_lines = mangle_name(insert_uids(text)).split(/\n/).map(&:strip).reject(&:blank?)
+  actual_lines = only_processes.last.stdout
+      .split(/\n/).map(&:strip).reject(&:blank?)
+  expect(actual_lines).to eq(expected_lines)
+end
+
+Then %r{^the resource "(.*?)" should have annotation "(.*?)"\s*=\s*"(.*?)"$} do |resource, key, value|
+  resource_id = "#{Conjur.account}:#{mangle_name(resource)}"
+  res = conjur.resource(resource_id)
+  expect(res).to exist
+  expect(res.annotations[key]).to eq(mangle_name(value))
+end
+
+When %r{^I create a (user|group) "(.*?)"$} do |kind, id|
+  id = mangle_name(id)
+  conjur.send :"create_#{kind}", id, ownerid: service_role.roleid
+end
+
+When %r{^I add user "(.*?)" to group "(.*?)"$} do |user_id, group_id|
+  group = conjur.group mangle_name(group_id)
+  user = conjur.user mangle_name(user_id)
+  group.add_member user
+end
+
+Then %r{^the role "(.*?)" should be a member of "(.*?)"$} do |member, role|
+  role = conjur.role(mangle_name(role))
+  member = conjur.role(mangle_name(member))
+  expect(member.member_of?(role)).to be_truthy
 end

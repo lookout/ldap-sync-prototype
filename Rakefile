@@ -54,9 +54,9 @@ desc "Move some environment variables around for the cukes"
 task :environment do
   if ENV['CONJUR_TEST_ENVIRONMENT'] == 'acceptance'
     ENV['CONJUR_APPLIANCE_URL'] = "https://#{ENV['CONJUR_APPLIANCE_HOSTNAME']}/api"
-    ENV['CONJUR_USERNAME'] = 'admin'
+    ENV['CONJUR_AUTHN_LOGIN'] = 'admin'
     raise "Missing $CONJUR_ADMIN_PASSWORD_FILE" unless ENV['CONJUR_ADMIN_PASSWORD_FILE']
-    ENV['CONJUR_API_KEY']  = File.read(ENV['CONJUR_ADMIN_PASSWORD_FILE']).chomp
+    ENV['CONJUR_AUTHN_API_KEY']  = File.read(ENV['CONJUR_ADMIN_PASSWORD_FILE']).chomp
     ENV['CONJUR_ACCOUNT'] ||= 'ci'
   end
 end
