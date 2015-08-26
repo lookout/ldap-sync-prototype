@@ -40,8 +40,8 @@ Feature: Entity annotations
 
   Scenario: Annotations with default options
     When I successfully sync
-    Then the resource "user:<prefix>-bob" should have annotation "ldap-sync/source"="ci:service:<prefix>"
-    And  the resource "group:<prefix>-users" should have annotation "ldap-sync/source"="ci:service:<prefix>"
+    Then the resource "user:<prefix>-bob" should have annotation "ldap-sync/source"="<account>:service:<prefix>"
+    And  the resource "group:<prefix>-users" should have annotation "ldap-sync/source"="<account>:service:<prefix>"
     And the resource "user:<prefix>-bob" should have annotation "ldap-sync/upstream-dn"="uid=bob,dc=conjur,dc=net"
     And  the resource "group:<prefix>-users" should have annotation "ldap-sync/upstream-dn"="cn=users,dc=conjur,dc=net"
 

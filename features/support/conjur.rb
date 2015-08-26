@@ -11,7 +11,8 @@ module ConjurHelpers
   attr_reader :service_role
 
   def mangle_name name
-    name.gsub /<prefix>/, @conjur_prefix
+    name.gsub(/<prefix>/, @conjur_prefix)
+        .gsub(/<account>/, Conjur.account)
   end
 
   def conjur_account
