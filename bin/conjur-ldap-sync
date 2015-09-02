@@ -11,7 +11,8 @@ class App
   include Methadone::CLILogging
 
   main do
-    Conjur::Ldap::Sync.run_sync options
+    #Conjur::Ldap::Sync.run_sync options
+    puts options
   end
 
   version Conjur::Ldap::Sync::VERSION
@@ -51,6 +52,16 @@ class App
   on('--user-object-classes CLASS1,CLASS2,...', Array,
      'LDAP objectClasses that should be imported as users') do |ocs|
     options[:user_object_classes] = ocs
+  end
+
+  on('--group-filter FILTER',
+      'LDAP filter to select groups for import (overrides --group-object-classes)') do |filter|
+    options[:group_filter] = filter
+  end
+
+  on('--user-filter FILTER',
+      'LDAP filter to select users for import (overrides --user-object-classes') do |filter|
+    options[:user_filter] = filter
   end
 
   on '--source-tag TAG',
