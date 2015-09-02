@@ -11,8 +11,7 @@ class App
   include Methadone::CLILogging
 
   main do
-    #Conjur::Ldap::Sync.run_sync options
-    puts options
+    Conjur::Ldap::Sync.run_sync options 
   end
 
   version Conjur::Ldap::Sync::VERSION
