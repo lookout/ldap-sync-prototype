@@ -66,6 +66,22 @@ describe Conjur::Ldap::Adapter do
       it_should_behave_like 'an object class filter method'
     end
 
+    context 'with --user-filter and --group-filter' do
+      let(:group_filter){ '(&(ou=ConjurGroups)(objectClass=group))' }
+      let(:user_filter){'(&(ou=ConjurGroups)(objectClass=group))' }
+      let(:options){ {group_filter: group_filter, user_filter: user_filter} }
+
+      describe '#users_filter' do
+        it('returns the user_filter option'){
+          expect(subject.users_filter).to eq(user_filter) }
+      end
+
+      describe '#groups_filter' do
+        it('returns the user_filter option'){
+          expect(subject.users_filter).to eq(user_filter) }
+      end
+    end
+
     shared_examples_for 'a find method' do
       let(:base_dn){ 'dc=conjur,dc=net' }
       let(:directory){ double('directory', base_dn: base_dn) }

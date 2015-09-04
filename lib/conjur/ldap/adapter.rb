@@ -124,11 +124,11 @@ module Conjur::Ldap
     end
 
     def groups_filter
-      object_class_filter group_object_classes
+      options[:group_filter] || object_class_filter(group_object_classes)
     end
 
     def users_filter
-      object_class_filter user_object_classes
+      options[:user_filter] || object_class_filter(user_object_classes)
     end
 
     def object_class_filter object_classes

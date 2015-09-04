@@ -87,6 +87,12 @@ in several ways:
 The object classes selected for users and groups can be controlled by the `--group-object-classes`
 and `--user-object-classes` flags, whose defaults are determined by the `--mode` flag.
 
+### Custom LDAP Filters
+
+If you need more flexibility than object class filters offer, you can pass an LDAP filter to use 
+to select groups and/or users to be imported, using the `--user-filter` and `--group-filter` options.  
+These options take precedence over the `--user-object-classes` and `--group-object-classes`.
+
 ### Source Tags
 
 In order to prevent subsequent runs of `conjur-ldap-sync` from colliding or altering users and groups that
