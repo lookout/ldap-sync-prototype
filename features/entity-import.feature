@@ -28,7 +28,7 @@ Feature: Entity import
 
       dn: cn=users,dc=conjur,dc=net
       cn: users
-      gidNumber: <gids[users]>
+      gidnumber: <gids[users]>
       objectClass: posixGroup
       objectClass: top
 
