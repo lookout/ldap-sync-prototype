@@ -22,11 +22,14 @@ class Conjur::Ldap::Adapter
         users_by_name[user.name] = user
       end
 
+      log.debug "groups_by_gid=#{groups_by_gid}"
+      log.debug "users_by_name=#{users_by_name}"
+
       groups = groups_by_gid.values
       users  = users_by_name.values
 
-      log.info "groups before=#{groups.inspect}"
-      log.info "users before=#{users.inspect}"
+      log.debug "groups before=#{groups.inspect}"
+      log.debug "users before=#{users.inspect}"
 
       # Map members of groups and groups of users onto actual objects.
       # Note that we have to reject! nil members (which can occur if a
@@ -48,39 +51,53 @@ class Conjur::Ldap::Adapter
         user.groups.each{|g| g << user}
       end
 
-      log.info "users=#{users.inspect}"
-      log.info "groups=#{groups.inspect}"
+      log.debug "users=#{users.inspect}"
+      log.debug "groups=#{groups.inspect}"
 
       model users, groups
     end
 
     def group_from_branch branch
-      name = first_of(branch['cn'])
-      gid  = first_of(branch['gidnumber']).to_i
+      name = first_of(branch, 'cn')
+      gid  = first_of(branch, 'gidNumber').to_i
       dn   = branch.dn # Not included in the hash
       group(name,dn,gid).tap do |g|
-        array_of(branch['memberuid']).each{|uid| g.members << uid}
+        array_of(branch, 'memberUid').each{|uid| g.members << uid}
       end
     end
 
     def user_from_branch branch
-      name = first_of(branch['uid'])
-      uid  = first_of(branch['uidnumber']).to_i
+      name = first_of(branch, 'uid')
+      uid  = first_of(branch, 'uidNumber').to_i
       dn   = branch.dn # DN is not included in the entry hash
       user(name, dn, uid).tap do |u|
-        array_of(branch['gidnumber']).each{ |gid| u.groups << gid.to_i }
+        array_of(branch, 'gidNumber').each{ |gid| u.groups << gid.to_i }
       end
     end
 
     private
-    def first_of val
-      (val.kind_of?(Array) ? val.first : val).tap do |v|
-        raise 'missing value' if v.nil?
-      end
+
+    def nil_or_empty? v
+      v.nil? or (v.respond_to?(:empty?) and v.empty?)
     end
 
-    def array_of thing
-      thing.kind_of?(Array) ? thing : [thing].compact
+    def attribute branch, name
+      val = branch[name]
+      if nil_or_empty?(val)
+        val = branch[name.downcase]
+      end
+      raise "missing attribute '#{name}' for object '#{branch.dn}'" if val.nil?
+      val
+    end
+
+    def first_of branch, name
+      val = attribute branch, name
+      val.kind_of?(Array) ? val[0] : val
+    end
+
+    def array_of branch, name
+      val = attribute(branch, name)
+      val.is_a?(Array) ? val : [val].compact
     end
   end
 end

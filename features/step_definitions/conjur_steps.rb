@@ -21,6 +21,15 @@ When %r{^I(?: can)?((?: not)|(?: successfully))? sync(?: with options "(.*)")?$}
   command = mangle_name "./bin/conjur-ldap-sync #{options}"
   if success.strip == 'successfully'
     run_simple unescape_text(command), false
+
+    if ENV['LDAP_SYNC_DEBUG_CUKES']
+      puts '+' * 80
+      puts "exited with #{last_command.exit_status} -> "
+      puts last_command.output
+      puts '-' * 80
+      puts
+    end
+
     unless last_command.exit_status == 0
       puts "failed to run #{command} | (#{last_command.exit_status}) output => \n#{last_command.output}"
       assert_success true

@@ -38,6 +38,7 @@ Feature: Entity import
       objectClass: posixGroup
       objectClass: top
       memberUid: bob
+
       """
     When I successfully sync
     Then role "user:<prefix>-alice" should exist

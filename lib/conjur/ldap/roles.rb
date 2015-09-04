@@ -235,7 +235,6 @@ class Conjur::Ldap::Roles
 
   # @!attribute r frozen hash containing our options.
   attr_reader :options
-
   attr_reader :api
 
   def prefix; options[:prefix] end
