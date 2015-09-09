@@ -110,11 +110,28 @@ Then %r{^a group named "(.*?)" exists and does not have gid (\d+)} do |name, gid
 end
 
 
-Then %r{^a user named "(.*?)" exists and does not have uid (\d+)} do |name, uid|
+Then %r{^a user named "(.*?)" exists and does not have uid (\d+)$} do |name, uid|
   user = conjur.user mangle_name(name)
   expect(user).to exist
-  expect(user.attributes['gidnumber'].to_s).to_not eq(uid.to_s)
+  expect(user.attributes['uidnumber'].to_s).to_not eq(uid.to_s)
 end
+
+
+Then %r{^a user named "(.*?)" exists and does not have the uid for "(.*?)"$} do |name, uid_for|
+  user = conjur.user mangle_name(name)
+  expect(user).to exist
+  uid = uids[uid_for]
+  expect(user.attributes['uidnumber'].to_s).to_not eq(uid.to_s)
+end
+
+Then %r{^a group named "(.*?)" exists and does not have the gid for "(.*?)"$} do |name, gid_for|
+  group = conjur.group mangle_name(name)
+  expect(group).to exist
+  gid = gids[gid_for]
+  expect(group.attributes['gidnumber'].to_s).to_not eq(gid.to_s)
+end
+
+
 
 Then %r{^the report should have text$} do |text|
   expected_lines = mangle_name(insert_uids(text)).split(/\n/).map(&:strip).reject(&:blank?)

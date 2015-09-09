@@ -35,6 +35,11 @@ Feature: LDAP gidNumbers are imported to Conjur groups
       objectClass: top
       memberUid: bob
       """
-  Scenario: LDAP gidNumbers are preserved by conjur-ldap-sync
+
+  Scenario: LDAP gidNumbers are preserved by conjur-ldap-sync by default
     When I successfully sync
     Then a group named "<prefix>-users" exists and has the gid for "users"
+
+  Scenario: LDAP gidNumbers can be ignored with '--no-import-gid-numbers'
+    When I successfully sync with options "--no-import-gid-numbers"
+    Then a group named "<prefix>-users" exists and does not have the gid for "users"
