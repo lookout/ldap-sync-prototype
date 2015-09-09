@@ -20,7 +20,8 @@ class App
   use_log_level_option
 
   options[:save_api_keys] = false
-  options[:ignore_ldap_ids] = false
+  options[:import_uid_numbers] = true
+  options[:import_gid_numbers] = true
   options[:prefix] = ENV['CONJUR_LDAP_SYNC_PREFIX']
   options[:bind_password] = ENV['CONJUR_LDAP_PASSWORD']
   options[:format] = :json
@@ -41,7 +42,18 @@ class App
 
   on('--bind-password PASS','Bind password for the LDAP server'){|val| options[:bind_password] = val}
 
-  on('--no-ldap-ids', "Don't import LDAP uids and gids"){ options[:ignore_ldap_ids] = true }
+  on '--no-ldap-ids', "Don't import LDAP uids or gids (deprecated)" do
+    options[:import_uid_numbers] = options[:import_gid_numbers] = false
+  end
+
+  on '--[no-]import-uid-numbers', 'Whether uid numbers should be imported from LDAP (true)' do |flag|
+    options[:import_uid_numbers] = flag
+  end
+
+  on '--[no-]import-gid-numbers', 'Whether gid numbers should be imported from LDAP (true)' do |flag|
+    options[:import_gid_numbers] = flag
+  end
+
 
   on('--group-object-classes CLASS1,CLASS2,...', Array,
      'LDAP objectClasses that should be imported as groups') do |ocs|

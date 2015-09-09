@@ -70,7 +70,7 @@ class Conjur::Ldap::Roles
     exists = conjur_user.exists?
 
     # Update the uid number if necessary
-    if exists and not (ignore_ldap_ids? or uid.nil? or uid == conjur_user.attributes['uidnumber'])
+    if exists && import_uid_numbers? && !(uid.nil? or uid == conjur_user.attributes['uidnumber'])
       update_conjur_user conjur_user, uid
     end
 
@@ -90,9 +90,7 @@ class Conjur::Ldap::Roles
 
     exists = conjur_group.exists?
 
-    if exists &&  !(ignore_ldap_ids? ||
-        gid.nil? ||
-        gid == conjur_group.attributes['gidnumber'])
+    if exists &&  import_gid_numbers? && !(gid.nil? || gid == conjur_group.attributes['gidnumber'])
       update_conjur_group conjur_group, gid
     end
 
@@ -123,7 +121,7 @@ class Conjur::Ldap::Roles
   # the save_api_keys? option is present.
   def create_conjur_user username, uid, ldap_user
     opts = {ownerid: owner.roleid}
-    opts.merge!(uidnumber: uid) unless uid.nil? or ignore_ldap_ids?
+    opts.merge!(uidnumber: uid) unless uid.nil? || !import_uid_numbers?
     report :create_user, user: username, uid: uid do
       api.create_user(username, opts).tap do |conjur_user|
         save_user_api_key(conjur_user) if save_api_keys?
@@ -135,7 +133,7 @@ class Conjur::Ldap::Roles
   # Analogous to `create_conjur_user`
   def create_conjur_group groupname, gid, ldap_group
     opts = {ownerid: owner.roleid}
-    opts.merge!(gidnumber: gid) unless gid.nil? or ignore_ldap_ids?
+    opts.merge!(gidnumber: gid) unless gid.nil? || !import_gid_numbers?
     report :create_group, group: groupname, gid: gid do
       api.create_group(groupname, opts).tap do |conjur_group|
         add_marker_annotations(conjur_group, ldap_group)
@@ -240,7 +238,9 @@ class Conjur::Ldap::Roles
   def prefix; options[:prefix] end
   def owner; options[:owner] end
   def save_api_keys?; options[:save_api_keys] end
-  def ignore_ldap_ids?; options[:ignore_ldap_ids] end
+  def import_uid_numbers?; options[:import_uid_numbers] end
+  def import_gid_numbers?; options[:import_gid_numbers] end
+
   def marker_tag
     options[:marker_tag] || api.current_role.roleid
   end
@@ -249,7 +249,10 @@ class Conjur::Ldap::Roles
   # Normalize options given to #sync_to.
   def normalize_options opts
     opts[:owner] = find_role(opts[:owner] || api.current_role)
-    {save_api_keys: false, import_ldap_ids: true}.merge(opts).freeze
+    {save_api_keys: false,
+        import_gid_numbers: true,
+        import_uid_numbers: true
+    }.merge(opts).freeze
   end
 
   # Resources marked with the tag we are currently using
