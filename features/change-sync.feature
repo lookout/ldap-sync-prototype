@@ -17,6 +17,15 @@ Feature: Synchronizing changes
       objectClass: posixAccount
       objectClass: top
 
+      dn: uid=bob,dc=conjur,dc=net
+      cn: Bob
+      uid: bob
+      uidNumber: <uids[bob]>
+      gidNumber: <gids[users]>
+      homeDirectory: /home/bob
+      objectClass: posixAccount
+      objectClass: top
+
       dn: cn=users,dc=conjur,dc=net
       cn: users
       gidNumber: <gids[users]>
@@ -33,6 +42,8 @@ Feature: Synchronizing changes
     And I successfully sync
     Then the role "user:<prefix>-alice" should exist
     And it should be a member of "group:<prefix>-admins"
+    And the role "user:<prefix>-bob" should exist
+    And it should not be a member of "group:<prefix>-admins"
 
     Then the LDAP database changes to
       """
@@ -42,6 +53,15 @@ Feature: Synchronizing changes
       uidNumber: <uids[alice]>
       gidNumber: <gids[users]>
       homeDirectory: /home/alice
+      objectClass: posixAccount
+      objectClass: top
+
+      dn: uid=bob,dc=conjur,dc=net
+      cn: Bob
+      uid: bob
+      uidNumber: <uids[bob]>
+      gidNumber: <gids[users]>
+      homeDirectory: /home/bob
       objectClass: posixAccount
       objectClass: top
 
@@ -56,6 +76,10 @@ Feature: Synchronizing changes
       gidNumber: <gids[admins]>
       objectClass: posixGroup
       objectClass: top
+      memberUid: bob
       """
     When I successfully sync
-    Then it should not be a member of "group:<prefix>-admins"
+    Then the role "user:<prefix>-alice" should exist
+    And it should not be a member of "group:<prefix>-admins"
+    And the role "user:<prefix>-bob" should exist
+    And it should be a member of "group:<prefix>-admins"
