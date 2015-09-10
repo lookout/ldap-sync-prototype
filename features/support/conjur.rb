@@ -81,7 +81,15 @@ module ConjurHelpers
 
 end
 
-World ConjurHelpers
+module CoverageHelper
+  def coverage_command_name
+    count = @command_count ||= 0
+    @command_count += 1
+    "features:#{count}:#{@feature_name}:#{@scenario_name}"
+  end
+end
+
+World ConjurHelpers, CoverageHelper
 
 Before do
   init_testrole

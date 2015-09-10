@@ -18,6 +18,8 @@ end
 When %r{^I(?: can)?((?: not)|(?: successfully))? sync(?: with options "(.*)")?$} do |success, options|
   # TODO this is gross!
   set_environment_variable 'CONJUR_LDAP_SYNC_PREFIX', conjur_prefix
+  set_environment_variable 'LDAP_SYNC_ENV', 'test'
+  set_environment_variable 'LDAP_SYNC_TEST_NAME', coverage_command_name
   command = mangle_name "./bin/conjur-ldap-sync #{options}"
   if success.strip == 'successfully'
     run_simple unescape_text(command), false

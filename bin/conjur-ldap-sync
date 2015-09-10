@@ -4,6 +4,10 @@ require 'bundler/setup'
 
 require 'optparse'
 require 'methadone'
+
+# Support coverage
+require 'support/setup-coverage' if ENV['LDAP_SYNC_ENV'] == 'test'
+
 require 'conjur/ldap/sync.rb'
 
 class App
@@ -11,8 +15,9 @@ class App
   include Methadone::CLILogging
 
   main do
-    Conjur::Ldap::Sync.run_sync options 
+    Conjur::Ldap::Sync.run_sync options
   end
+
 
   version Conjur::Ldap::Sync::VERSION
   description "Synchronize Conjur with an external LDAP database"

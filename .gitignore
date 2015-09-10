@@ -13,3 +13,4 @@ conjur-devldap.pem
 .rvmrc
 .rspec
 *.log
+coverage/

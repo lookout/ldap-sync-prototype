@@ -34,4 +34,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'rspec-expectations', '~> 3.3.0'
   spec.add_development_dependency 'ladle', '~> 0.2'
   spec.add_development_dependency 'rubydns', '~> 0.8.0'
+  spec.add_development_dependency 'simplecov', '>= 0.9'
 end
