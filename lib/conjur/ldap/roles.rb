@@ -185,7 +185,7 @@ class Conjur::Ldap::Roles
 
     remove_members.each do |conjur_role|
       report :remove_member, group: conjur_group.id, user: conjur_role.id do
-        conjur_group.remove_member self.user(conjur_role.id)
+        conjur_group.remove_member api.user(conjur_role.id)
       end
     end
   end
