@@ -113,6 +113,14 @@ This means that only relationships between LDAP groups and users will be destroy
 If you haven't manipulated the structure via Conjur, this is effectively the same as a retire that can be undone
 by the service role.  Thus, if the role should reappear in LDAP, it's memberships can readily be restored.
 
+### Importing `uidNumber` and `gidNumber` Attributes
+
+Conjur users and groups have `uid` and `gid` attributes respectively, which can be used, for example, to support 
+SSH login.  By default, these are set and updated with the value of the `uidNumber` and `gidNumber` attributes of 
+LDAP `posixAccount` and `posixGroup` objects.  Under some circumstances, this may not be the desired behavior -- for example, Conjur `uid`s must be unique, but LDAP does not support this constraint.  In this case you would want to turn off the import of `uidNumber` attributes.
+
+Import of `uidNumber` and `gidNumber` attributes is controlled by two flags: `--[no-]import-gid-numbers` and
+`--[no-]import-uid-numbers`.
 
 The `conjur-ldap-sync` command accepts the following options:
 
@@ -129,12 +137,13 @@ The `conjur-ldap-sync` command accepts the following options:
         --save-api-keys              When present, passwords will be saved to variables
         --bind-dn DN                 Bind DN for the LDAP server
         --bind-password PASS         Bind password for the LDAP server
-        --no-ldap-ids                Don't import LDAP uids and gids
         --group-object-classes CLASS1,CLASS2,...
                                      LDAP objectClasses that should be imported as groups
         --user-object-classes CLASS1,CLASS2,...
                                      LDAP objectClasses that should be imported as users
         --source-tag TAG             Annotation added to assets imported from ldap.
+        --[no-]import-uid-numbers    Whether to import LDAP uidNumbers (true)
+        --[no-]import-gid-numbers    Whether to import LDAP gidNumbers (true)
 
 
 The `--save-api-keys` is off by default, but recommended if you want to allow created roles to login to
