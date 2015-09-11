@@ -122,6 +122,8 @@ LDAP `posixAccount` and `posixGroup` objects.  Under some circumstances, this ma
 Import of `uidNumber` and `gidNumber` attributes is controlled by two flags: `--[no-]import-gid-numbers` and
 `--[no-]import-uid-numbers`.
 
+## Command Usage
+
 The `conjur-ldap-sync` command accepts the following options:
 
     -h, --help                       Show command line help
