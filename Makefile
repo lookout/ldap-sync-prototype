@@ -60,7 +60,7 @@ build/clean:
 build/base: $(BASE_DEPS) $(BUILDDIR)
 	rm -rf $(BASE_DOCKER_CONTEXT)
 	mkdir -pv $(BASE_DOCKER_CONTEXT)
-	cp -r --preserve=all $(BASE_SOURCES) Dockerfile $(BASE_DOCKER_CONTEXT)
+	rsync --delete -a $(BASE_SOURCES) Dockerfile $(BASE_DOCKER_CONTEXT)
 	echo "BUILD_NUMBER=$(BUILD_NUMBER)" > $(BASE_DOCKER_CONTEXT)/build.base.info
 	git show | head -n 2 >> $(BASE_DOCKER_CONTEXT)/build.base.info
 	git status -s -b >> $(BASE_DOCKER_CONTEXT)/build.base.info
