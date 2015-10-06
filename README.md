@@ -1,3 +1,7 @@
+# Note
+
+Please note, this repository is a pre-production application. We welcome utilization and feedback, however it is not officially supported by Conjur Inc.
+
 # Conjur LDAP Sync
 
 Synchronizes users and groups from an upstream LDAP to Conjur [Users](http://developer.conjur.net/reference/services/directory/user) and [Groups](http://developer.conjur.net/reference/services/directory/group).
