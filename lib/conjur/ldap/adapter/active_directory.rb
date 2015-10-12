@@ -47,7 +47,7 @@ class Conjur::Ldap::Adapter
 
     def user_from_branch branch_hash
       uid = branch_hash['uidNumber'].to_i
-      cn =  branch_hash['cn']
+      cn =  branch_hash[options[:username]]
       dn = branch_hash['distinguishedName']
       user massage_cn(cn), dn, uid
     end
