@@ -31,6 +31,10 @@ class App
   options[:bind_password] = ENV['CONJUR_LDAP_PASSWORD']
   options[:format] = :json
   options[:mode] = :posix
+  options[:username] = :cn
+
+  on '--username ATTR', [:cn,:sAMAccountName],
+     'Use this attribute rather than CN for user name collection'
 
   on '--format FORMAT', [:text,:json],
      'Output format for reporting (text, json)'
